@@ -1,0 +1,2360 @@
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src:
+    url('/_shared/webfonts/IBMPlexSans-VariableFont_wdth,wght.woff2') format('woff2-variations'),
+    url('/_shared/webfonts/IBMPlexSans-VariableFont_wdth,wght.woff2') format('woff2');
+  font-weight: 100 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src:
+    url('/_shared/webfonts/IBMPlexSans-Italic-VariableFont_wdth,wght.woff2')
+      format('woff2-variations'),
+    url('/_shared/webfonts/IBMPlexSans-Italic-VariableFont_wdth,wght.woff2') format('woff2');
+  font-weight: 100 700;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Sans Arabic';
+  src: url('/_shared/webfonts/IBMPlexSansArabic-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Sans Arabic';
+  src: url('/_shared/webfonts/IBMPlexSansArabic-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Sans Arabic';
+  src: url('/_shared/webfonts/IBMPlexSansArabic-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Sans Arabic';
+  src: url('/_shared/webfonts/IBMPlexSansArabic-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Sans Arabic';
+  src: url('/_shared/webfonts/IBMPlexSansArabic-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src:
+    url('/_shared/webfonts/JetBrainsMono-VariableFont_wght.woff2') format('woff2-variations'),
+    url('/_shared/webfonts/JetBrainsMono-VariableFont_wght.woff2') format('woff2');
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* =====================================================================
+     PRIMITIVE TOKENS — raw scales with no meaning attached. Nothing in
+     the app should reference these directly except the semantic/component
+     tokens below; this indirection is what lets the whole app re-theme or
+     re-scale from one place instead of hunting through every component.
+     ===================================================================== */
+
+  /* Primitive spacing scale (rem-based so it follows the user's browser
+     font-size/zoom setting, not just fixed-px "Ctrl +"). 1rem = 16px. */
+  --space-1: 0.25rem; /* 4px  */
+  --space-2: 0.5rem; /* 8px  */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-5: 1.25rem; /* 20px */
+  --space-6: 1.5rem; /* 24px */
+  --space-8: 2rem; /* 32px */
+  --space-10: 2.5rem; /* 40px */
+
+  /* Primitive type scale (rem-based). Body copy stays close to 1rem —
+     fluid clamp() scaling is reserved for headings/display text per the
+     "don't shrink body text" rule; see --text-heading-lg below. */
+  --text-xs: 0.75rem; /* 12px */
+  --text-sm: 0.8125rem; /* 13px */
+  --text-base: 0.9375rem; /* 15px — the app's existing base size */
+  --text-md: 1rem; /* 16px */
+  --text-lg: 1.0625rem; /* 17px */
+  --text-xl: 1.25rem; /* 20px */
+  --text-2xl: clamp(1.375rem, 1.2rem + 0.8vw, 1.625rem); /* headings scale fluidly */
+
+  /* Primitive brand palette */
+  --color-primary: #12315a;
+  --color-primary-light: #1c4a82;
+  --color-primary-dark: #0a2038;
+  /* --color-accent: #b08d57; */
+  /* --color-accent-light: #d4af37; */
+  --color-accent: #c49a6c; /* soft bronze-gold */
+  --color-accent-light: #e6c27a; /* muted champagne-gold */
+
+  /* =====================================================================
+     SEMANTIC TOKENS — what a primitive *means* in this app. Components
+     should reach for these, not the primitives above, so a future retheme
+     only touches this block.
+     ===================================================================== */
+
+  --surface: #ffffff;
+  --surface-sunken: #f4f6f9;
+  /* A hair off pure white — used for hover/focus-adjacent surfaces (inputs,
+     table-row hover, cards-within-cards) that need to read as "raised but
+     inactive" without the stronger contrast of --surface-sunken. Reused in
+     4+ places, which is what earns it a token instead of a repeated literal. */
+  --surface-hover: #fbfcfe;
+  --border: #d7dce3;
+
+  /* Text (WCAG AA: >=4.5:1 on --surface / --surface-sunken) */
+  --text: #16202f;
+  --text-muted: #4f5a6b;
+  --text-on-dark: #ffffff;
+  --text-on-dark-muted: rgba(255, 255, 255, 0.8);
+
+  /* Status (foreground darkened for AA text contrast on its own -bg) */
+  --success: #157a3f;
+  --success-bg: #e5f5eb;
+  --warning: #8a5a12;
+  --warning-bg: #fbedd3;
+  --danger: #a52f22;
+  --danger-bg: #fae2df;
+  --info: #1f5a94;
+  --info-bg: #e3edf9;
+
+  /* Light tints of the two brand colors — the status set above (success/
+     warning/danger/info) has no light variant for "primary" or "accent",
+     but role-identity avatars need one (Admin/Lawyer use the brand colors
+     themselves, not a status color). Reused wherever a light brand tint is
+     needed, not just avatars. */
+  --primary-bg: #e7ecf3;
+  --accent-bg: #f6eee0;
+
+  /* Legacy aliases: kept so every existing component rule below keeps
+     working unchanged. New rules should prefer the semantic names above. */
+  --color-bg: var(--surface-sunken);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 1px 2px rgba(18, 49, 90, 0.06);
+  --shadow-md: 0 4px 16px rgba(18, 49, 90, 0.08);
+  --shadow-lg: 0 12px 32px rgba(18, 49, 90, 0.14);
+
+  /* =====================================================================
+     COMPONENT TOKENS — the few values components should actually consume
+     directly when nothing more specific exists yet. Kept deliberately
+     small; component-specific one-off values stay local to that
+     component's rule instead of becoming a global variable (section 18).
+     ===================================================================== */
+
+  --control-height: var(--space-10); /* 44px — WCAG/HIG minimum touch target */
+  --gutter: clamp(1rem, 4vw, 1.625rem); /* page-edge padding, fluid across all widths */
+  --content-max: 1440px; /* keeps dashboards/tables from over-stretching on 1920px+ monitors */
+
+  /* ---- Layout ---- */
+  --sidebar-width: 264px;
+  --topbar-height: 68px;
+
+  /* ---- Mobile (native-app-style bottom navigation) ---- */
+  --bottom-nav-height: 60px;
+  --mobile-topbar-height: 56px;
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-top: env(safe-area-inset-top, 0px);
+
+  /* ---- Typography ---- */
+  --font-ar: 'IBM Plex Sans Arabic', 'Segoe UI', sans-serif;
+  --font-en: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+}
+
+/* Canonical breakpoints (hardcoded in @media rules — custom properties
+   can't drive media-query conditions). Every responsive override in this
+   file lives in ONE consolidated section at the very end, ordered by
+   breakpoint, specifically so a later base-style rule can never win a
+   cascade tie against an earlier mobile override again (see the "Mobile
+   breakpoints" section at the bottom of this file for the full story). */
+
+* {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-ar);
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-wrap: break-word;
+}
+
+html[lang='en'] body {
+  font-family: var(--font-en);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background: var(--color-accent-light);
+}
+
+/* ---------- Login ---------- */
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-dark),
+    var(--color-primary) 55%,
+    var(--color-primary-light)
+  );
+  padding: var(--gutter);
+}
+
+.login-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.55;
+  pointer-events: none;
+  animation: orb-float 16s ease-in-out infinite;
+}
+.login-orb.orb-1 {
+  width: 460px;
+  height: 460px;
+  background: var(--color-accent);
+  top: -140px;
+  inset-inline-start: -120px;
+  animation-duration: 18s;
+}
+.login-orb.orb-2 {
+  width: 380px;
+  height: 380px;
+  background: #2b6cb0;
+  bottom: -160px;
+  inset-inline-end: -100px;
+  animation-duration: 22s;
+  animation-delay: -6s;
+}
+.login-orb.orb-3 {
+  width: 300px;
+  height: 300px;
+  background: #1f8a4c;
+  top: 40%;
+  inset-inline-start: 45%;
+  opacity: 0.35;
+  animation-duration: 26s;
+  animation-delay: -12s;
+}
+
+@keyframes orb-float {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(40px, -30px) scale(1.08);
+  }
+  66% {
+    transform: translate(-30px, 25px) scale(0.95);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-orb {
+    animation: none;
+  }
+}
+
+.login-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 940px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+}
+
+/* Mobile override for .login-card/.login-brand lives in the consolidated
+   responsive section at the end of this file (see "Mobile breakpoints") —
+   NOT here. Placing it here previously caused a real bug: this rule sat
+   *before* the base .login-brand rule below, and because both are simple
+   class selectors of equal specificity, the base rule's `display: flex`
+   (declared later in the file) silently won the cascade at every width,
+   so the mobile-only "hide the brand panel" override never actually
+   applied. Every responsive rule in this app must live after every base
+   rule it touches — the consolidated end-of-file section guarantees that
+   by construction instead of relying on developers remembering it. */
+
+.login-brand {
+  background: rgba(10, 32, 56, 0.35);
+  color: #fff;
+  padding: 48px 36px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-inline-end: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.login-brand .brand-mark {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--color-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--color-primary-dark);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+.login-brand h1 {
+  font-size: 24px;
+  margin-top: 20px;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+.login-brand p {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+}
+
+.login-form-wrap {
+  padding: clamp(1.25rem, 3vw + 0.5rem, 2.75rem) clamp(1rem, 3vw, 2.25rem);
+  background: rgba(255, 255, 255, 0.94);
+}
+.login-form-wrap h2,
+.login-form-wrap p.text-muted {
+  color: var(--color-text);
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--color-text-muted);
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  min-height: var(--control-height);
+  padding: 11px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-hover);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.form-group textarea {
+  min-height: calc(var(--control-height) * 1.6);
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--color-primary-light);
+  box-shadow: 0 0 0 3px rgba(28, 74, 130, 0.12);
+}
+.field-error {
+  color: var(--color-danger);
+  font-size: 12px;
+  margin-top: 4px;
+  display: none;
+}
+.form-group.invalid input {
+  border-color: var(--color-danger);
+}
+.form-group.invalid .field-error {
+  display: block;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  padding: 0.6875rem 1.25rem; /* 11px 20px */
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.875rem; /* 14px */
+  transition:
+    transform 0.1s,
+    box-shadow 0.15s,
+    background 0.15s;
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn:focus-visible {
+  /* Shared across every .btn variant — reuses the same focus-ring language
+     already used on form inputs, so keyboard focus is visible consistently
+     app-wide rather than only on the one button this was added for. */
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(28, 74, 130, 0.25);
+}
+/* ---- The app's two required button variants: Primary and Secondary ----
+   Every :hover/:focus-visible/:active/:disabled state either variant needs
+   is defined once: :active/:focus-visible/:disabled above are shared by
+   every .btn (including these two), so only :hover differs per variant
+   below. Both read their colors from the semantic tokens in :root, so a
+   retheme only ever touches this file's one variable block. */
+.btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+.btn-primary:hover {
+  background: var(--color-primary-light);
+}
+.btn-secondary,
+.btn-outline {
+  /* .btn-outline is this variant's original class name and stays fully
+     supported (every page still uses it) — .btn-secondary is a same-rule
+     alias so new markup can spell out "secondary" explicitly. */
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+.btn-secondary:hover,
+.btn-outline:hover {
+  border-color: var(--color-primary-light);
+}
+/* ---- Additional intentional variants beyond the required pair ----
+   Accent marks a special-emphasis CTA (e.g. "create reminder") and Danger
+   marks a destructive action (e.g. delete) — distinct real semantics the
+   primary/secondary pair can't express, so they're kept rather than folded
+   in and losing that meaning. */
+.btn-accent {
+  background: var(--color-accent);
+  color: var(--color-primary-dark);
+}
+.btn-accent:hover {
+  background: var(--color-accent-light);
+}
+.btn-danger {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+.btn-sm {
+  /* Intentionally below --control-height: this variant is used for dense,
+     repeated inline actions (table rows, document/case-list actions) where
+     a full 44px row-height per action would make already-dense data views
+     unusably tall. 36px (2.25rem) still clears the ~32px "secondary
+     control" floor most touch guidelines allow, and siblings keep >=6px
+     gap to avoid mis-taps. */
+  min-height: 2.25rem; /* 36px */
+  padding: 0.4375rem 0.75rem; /* 7px 12px */
+  font-size: 0.78125rem; /* 12.5px */
+}
+.btn-block {
+  width: 100%;
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.quick-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+/* Role identity: one consistent icon + color per role, everywhere a user
+   avatar appears (sidebar, topbar, users table) — see roleAvatar() in
+   ui.js. Contrast checked against WCAG 1.4.11 (3:1 for non-text/icon
+   content), not the stricter 4.5:1 text threshold. */
+.role-avatar-admin {
+  background: var(--primary-bg);
+  color: var(--color-primary);
+}
+.role-avatar-lawyer {
+  background: var(--accent-bg);
+  color: #8a6b3d;
+}
+.role-avatar-consultant {
+  background: var(--info-bg);
+  color: var(--info);
+}
+.role-avatar-delegate {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+.role-avatar-client {
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+}
+.brand-logo-img {
+  /* The logo artwork already IS a self-contained dark rounded-square
+     badge with the gold scale icon baked in — inheriting .brand-mark's
+     own flat gold fill/box behind it (meant for the plain-text "AS"
+     fallback, which has no artwork of its own and needs a background for
+     contrast) produced a clashing "double frame": a solid gold square
+     with a smaller dark rounded image floating inside it. Dropping the
+     background/padding lets the artwork read as one clean badge; the
+     soft shadow + thin translucent gold ring add depth/polish without
+     reintroducing a competing fill color. */
+  background: transparent;
+  padding: 0;
+  object-fit: contain;
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.35),
+    0 0 0 1.5px rgba(176, 141, 87, 0.55);
+}
+.login-error-box {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  margin-bottom: 16px;
+  display: none;
+}
+.login-error-box.show {
+  display: block;
+}
+
+/* ---------- App Shell ---------- */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--color-primary-dark);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  flex-shrink: 0;
+}
+.sidebar-brand {
+  padding: 22px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.sidebar-brand .brand-mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--color-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+.sidebar-brand .brand-text {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.sidebar-brand .brand-sub {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 14px 10px;
+  overflow-y: auto;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: var(--radius-sm);
+  color: rgba(255, 255, 255, 0.78);
+  cursor: pointer;
+  margin-bottom: 4px;
+  font-size: 13.5px;
+  font-weight: 500;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.nav-item .nav-icon {
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+.nav-item.active {
+  background: var(--color-accent);
+  color: var(--color-primary-dark);
+  font-weight: 700;
+}
+.nav-badge {
+  margin-inline-start: auto;
+  background: var(--color-danger);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 20px;
+}
+
+.sidebar-footer {
+  padding: 14px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.sidebar-user .quick-avatar {
+  margin: 0;
+}
+.sidebar-user .u-name {
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.sidebar-user .u-role {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.sidebar-footer .btn-outline {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+.sidebar-footer .btn-outline:hover {
+  background: rgb(255 0 0 / 10%);
+  border-color: rgb(255 0 0 / 40%);
+}
+
+.main-area {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  height: var(--topbar-height);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 26px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.topbar-title {
+  font-size: 17px;
+  font-weight: 700;
+  /* This is navigation chrome, not the page's actual content — every page
+     already repeats its full descriptive heading in its own <h2> (e.g.
+     "Users & Permissions Management"), so truncating the short nav label
+     here loses nothing. Without this, a long label plus the fixed-height
+     topbar's lack of vertical overflow room would let text wrap and get
+     silently clipped instead. */
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+.icon-btn {
+  width: var(--control-height);
+  height: var(--control-height);
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+.icon-btn:hover {
+  background: var(--color-bg);
+}
+.icon-badge {
+  position: absolute;
+  top: -3px;
+  inset-inline-end: -3px;
+  background: var(--color-danger);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 20px;
+  padding: 1px 5px;
+  min-width: 16px;
+  text-align: center;
+}
+
+.page-content {
+  /* Fluid gutter (clamp) replaces a hard desktop/mobile padding jump, so
+     the page reads correctly at every width in between, not just at the
+     two sizes someone happened to test (section 2B: "avoid arbitrary
+     fixed widths ... prefer fluid sizing"). */
+  padding: var(--gutter);
+  flex: 1;
+  width: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
+}
+
+/* ---------- Cards & Stats ---------- */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+  position: relative;
+  overflow: hidden;
+}
+.stat-card .stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+.stat-card .stat-value {
+  font-size: 26px;
+  font-weight: 700;
+}
+.stat-card .stat-label {
+  font-size: 12.5px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.stat-section-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin: 4px 0 10px;
+}
+
+/* ---------- Dashboard: Quick Actions (Admin/Lawyer case browser) ----------
+   Chips + case pills, sized in rem/em off the shared token scale so they
+   track the user's font-size setting like the rest of the app; logical
+   (inline-start/end) properties throughout, so the layout mirrors correctly
+   under [dir="rtl"] with no separate rule. */
+.qa-panel {
+  margin-bottom: var(--space-6);
+}
+.qa-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 var(--space-4);
+}
+.qa-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: 1px solid var(--color-border);
+  background: var(--surface-hover);
+  color: var(--color-text);
+  border-radius: 999em;
+  padding: 0.4em 0.9em;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+.qa-chip:hover {
+  border-color: var(--color-primary-light);
+}
+.qa-chip:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(28, 74, 130, 0.25);
+}
+.qa-chip.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--text-on-dark);
+}
+.qa-chip-count {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 999em;
+  padding: 0.05em 0.55em;
+  font-size: var(--text-xs);
+}
+.qa-chip.active .qa-chip-count {
+  background: rgba(255, 255, 255, 0.25);
+}
+.qa-case-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  gap: var(--space-2);
+}
+.qa-case-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2em;
+  text-align: start;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  min-height: var(--control-height);
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.qa-case-pill:hover {
+  border-color: var(--color-primary-light);
+  box-shadow: var(--shadow-sm);
+}
+.qa-case-pill:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(28, 74, 130, 0.25);
+}
+.qa-case-number {
+  font-weight: 700;
+  font-size: var(--text-sm);
+  color: var(--color-primary-dark);
+}
+.qa-case-parties {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* ---------- Upload access grants (client document uploads) ---------- */
+.upload-grant-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--color-success-bg);
+  border: 1px solid #bfe3cc;
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  font-size: 13px;
+}
+.upload-grant-banner i {
+  color: var(--color-success);
+  font-size: 18px;
+}
+.upload-grant-banner .ug-expiry {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+.upload-blocked-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--color-bg);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+.upload-blocked-banner i {
+  font-size: 18px;
+}
+.grant-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 12.5px;
+}
+.grant-row:last-child {
+  border-bottom: none;
+}
+
+.panel {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+/* One header treatment for every panel in the app.
+   `--surface-sunken` is the design system's neutral recessed tone, so the
+   strip reads as a header against the white panel body without claiming a
+   semantic colour: the previous `--color-info-bg` is the *info* tint, which
+   made every panel — hearings, documents, users — look like an information
+   notice. The accent hairline ties it to the brand without adding a second
+   border weight, and the rounded top corners stop the fill bleeding past the
+   panel's own radius. */
+.panel-header {
+  padding: 11px 16px;
+  background: var(--surface-sunken);
+  border-bottom: 1px solid var(--color-border);
+  border-top: 2px solid var(--color-accent);
+  /* Matches the panel's own radius minus its 1px border, so the fill follows
+     the card's corners instead of squaring them off. Logical-property safe:
+     the top corners are the same two in LTR and RTL. */
+  border-radius: calc(var(--radius-md) - 1px) calc(var(--radius-md) - 1px) 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.panel-header h3 {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0;
+}
+.panel-body {
+  padding: 16px 18px;
+}
+
+.hearing-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 12px 0;
+  margin: 0.5rem 0;
+  border-bottom: 1px dashed var(--color-border);
+}
+.hearing-row:last-child {
+  border-bottom: none;
+}
+.hearing-info {
+  /* Case/party names are real legal content and can run long (section 11)
+     — this claims priority space and wraps its own text rather than being
+     crushed by the countdown pill's fixed width. If the row is too narrow
+     for both, flex-wrap on .hearing-row above drops the pill to its own
+     line instead of shrinking the case text to near-nothing. */
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.hearing-meta {
+  font-size: 12.5px;
+  color: var(--color-text-muted);
+}
+/* Three units (days / hours / minutes), sized down a step from the original
+   four-unit pill so the row reads as supporting detail rather than competing
+   with the case name beside it. */
+.countdown-pill {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.countdown-unit {
+  background: var(--success);
+  color: #fff;
+  border-radius: var(--radius-sm);
+  padding: 4px 6px;
+  text-align: center;
+  min-width: 38px;
+}
+.countdown-unit b {
+  display: block;
+  font-size: 12.5px;
+  line-height: 1.25;
+}
+.countdown-unit span {
+  font-size: 8.5px;
+  opacity: 0.8;
+}
+.countdown-unit.urgent {
+  background: var(--color-danger);
+}
+
+/* ---------- Tabs ---------- */
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+.tab-btn {
+  /* flex-shrink:0 is load-bearing, not decorative: the global `* {
+     min-width: 0 }` reset (added for flex text-truncation elsewhere) also
+     removes the implicit `min-width: auto` flex items get by default, so
+     without this a tab button is free to shrink its box below its own
+     nowrap label's width — the label then overflows the shrunk box and
+     visually collides with the next tab instead of the row simply
+     scrolling (`.tabs` already has overflow-x: auto for exactly that). */
+  flex-shrink: 0;
+  padding: 12px 18px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
+  font-size: 13.5px;
+}
+.tab-btn.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-accent);
+}
+
+.search-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.search-actions {
+  display: flex;
+  gap: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+thead th {
+  text-align: start;
+  padding: 10px 12px;
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  font-weight: 700;
+  font-size: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+tbody td {
+  padding: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+tbody tr:hover {
+  background: var(--surface-hover);
+}
+.table-wrap {
+  overflow-x: auto;
+}
+
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.badge-success {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+.badge-warning {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+.badge-danger {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+.badge-info {
+  background: var(--color-info-bg);
+  color: var(--color-info);
+}
+.badge-muted {
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--color-text-muted);
+}
+.empty-state .empty-icon {
+  font-size: 34px;
+  margin-bottom: 10px;
+}
+
+.filters-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.filters-row .form-group {
+  margin-bottom: 0;
+  min-width: 180px;
+}
+
+/* ---------- Modal ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 20, 40, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: var(--space-5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.modal-box {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 45rem; /* 720px */
+  max-height: 88vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(10px);
+  transition: transform 0.15s;
+}
+.modal-overlay.open .modal-box {
+  transform: translateY(0);
+}
+.modal-header {
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  background: var(--color-primary-dark);
+  color: var(--color-accent-light);
+  /* Load-bearing: .modal-box gets its own stacking context from its
+     `transform` (used for the open/close slide animation), and within
+     that context a `position: sticky` element with no z-index paints
+     according to DOM tree order, not "is currently stuck" — so any
+     absolutely-positioned content further down modal-body (e.g.
+     .timeline-item's dot markers) painted AFTER it in the tree, which
+     visually put the timeline on top of the sticky header once scrolled
+     under it. An explicit z-index removes the ambiguity. */
+  z-index: 2;
+}
+.modal-header h3 {
+  font-size: 1rem;
+}
+.modal-close {
+  /* Sits on .modal-header's dark navy background, so it needs its own
+     light-on-dark color rather than --color-text-muted (tuned for light
+     surfaces elsewhere in the app, which read as nearly invisible here).
+     Sized to a full 44x44px (2.75rem) hit area per WCAG 2.5.5, independent
+     of --control-height (2.5rem/40px) which targets normal-density controls,
+     not a lone icon-only close affordance in a header corner. */
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  margin-inline-end: -0.5rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-on-dark-muted);
+  font-size: 1.375rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-on-dark);
+}
+.modal-close:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4);
+}
+.modal-close:active {
+  background: rgba(255, 255, 255, 0.2);
+}
+.modal-body {
+  padding: var(--space-5);
+}
+
+/* ---------- Timeline ---------- */
+.timeline-list {
+  position: relative;
+  padding-inline-start: 26px;
+}
+.timeline-list::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 8px;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  background: var(--color-border);
+}
+.timeline-item {
+  position: relative;
+  padding-bottom: 22px;
+}
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: -26px;
+  top: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-border);
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 2px var(--color-border);
+}
+.timeline-item.done::before {
+  background: var(--color-success);
+  box-shadow: 0 0 0 2px var(--color-success);
+}
+.timeline-item .ti-title {
+  font-weight: 700;
+  font-size: 13.5px;
+}
+.timeline-item .ti-date {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* ---------- Upload ---------- */
+.dropzone {
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+  margin-bottom: 22px;
+  background: var(--surface-hover);
+}
+.dropzone.dragover {
+  border-color: var(--color-primary-light);
+  background: var(--color-info-bg);
+}
+.dropzone .dz-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+.upload-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.upload-item:last-child {
+  border-bottom: none;
+}
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: var(--color-primary);
+  width: 0%;
+  transition: width 0.2s;
+}
+
+/* ---------- Document Center: case accordion ---------- */
+.doc-case-group {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.doc-case-group:last-child {
+  margin-bottom: 0;
+}
+.doc-case-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--surface-hover);
+}
+.doc-case-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 200px;
+  min-width: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.doc-case-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(28, 74, 130, 0.25);
+  border-radius: var(--radius-sm);
+}
+.doc-case-chevron {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: transform 0.15s;
+}
+.doc-case-group.open .doc-case-chevron {
+  transform: rotate(90deg);
+}
+/* The icon itself (fa-chevron-right) is a physical glyph — it always points
+   right, [dir] or not, unless mirrored explicitly. At rest it should point
+   toward the reading direction's "expand" side: right under LTR (no change
+   needed), left under RTL (rotate 180deg, which turns ">" into "<"). The
+   `.open` rule above has higher specificity (3 classes vs. 1 attribute + 1
+   class) so it still wins in both directions, meaning "open" always reads
+   as pointing down — no separate RTL override of the open state is needed. */
+[dir='rtl'] .doc-case-chevron {
+  transform: rotate(180deg);
+}
+.doc-case-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 700;
+  font-size: 14px;
+  overflow-wrap: break-word;
+}
+.doc-case-title .dc-parties {
+  font-weight: 500;
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+.doc-case-count {
+  flex-shrink: 0;
+}
+.doc-case-body {
+  padding: 4px 14px 14px;
+}
+.doc-item .doc-item-name {
+  font-weight: 600;
+  font-size: 13.5px;
+  overflow-wrap: break-word;
+}
+.doc-item-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* The notification bell had a preview dropdown here (.notif-dropdown /
+   .notif-item). It was removed along with its markup and handlers: the bell
+   now navigates straight to the Notifications page, so there is exactly one
+   place notifications are read and no second, truncated copy of the list to
+   keep in sync. `.notif-smart` and `.smart-tag` further down are NOT part of
+   that dropdown — the Notifications page still uses them. */
+
+/* ---------- Toast ---------- */
+.toast-container {
+  position: fixed;
+  bottom: 20px;
+  inset-inline-end: 20px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.toast {
+  background: var(--color-primary-dark);
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  font-size: 13.5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: toast-in 0.2s ease;
+}
+.toast.success {
+  background: var(--color-success);
+}
+.toast.error {
+  background: var(--color-danger);
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+.mt-0 {
+  margin-top: 0;
+}
+.flex-between {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.flex-between > h1,
+.flex-between > h2,
+.flex-between > h3 {
+  /* Page-header + action-button pattern (Cases, Documents, Notifications,
+     Users). Wrapping the heading's own text is fine and expected; this
+     just stops a very long heading from refusing to shrink at all and
+     pushing the action button off the row before wrapping kicks in. */
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.gap-8 {
+  gap: 8px;
+}
+
+/* ---------- Responsive label swap ----------
+   Shared utility pair: a component renders BOTH a full descriptive label
+   and a concise one (e.g. topbar title, search tabs); which one is visible
+   is a pure CSS breakpoint flip, not a JS viewport check, so the same
+   markup and event wiring serves both modes (see .topbar-title and
+   .tab-btn usage). Mobile override lives in the consolidated <=768px
+   section below, next to every other mobile rule. */
+.label-short {
+  display: none;
+}
+
+/* ---------- Bulk selection toolbar (Users & Permissions) ---------- */
+.bulk-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  background: var(--color-info-bg);
+  border: 1px solid #bcd7ef;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  display: none;
+}
+.bulk-toolbar.show {
+  display: flex;
+}
+.bulk-toolbar .btn {
+  /* Let each action button wrap to a new row as a whole unit instead of
+     compressing below its own text's natural width, which otherwise wraps
+     multi-word Arabic labels internally into uneven, cramped multi-line
+     buttons (see engineering report). */
+  flex: 0 1 auto;
+  white-space: nowrap;
+}
+.bulk-toolbar .count {
+  font-weight: 700;
+  color: var(--color-primary);
+}
+.row-checkbox,
+.select-all-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* ---------- Reminders ---------- */
+.reminder-item {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.reminder-item.overdue {
+  border-color: var(--color-danger);
+  background: var(--color-danger-bg);
+}
+.reminder-item .r-note {
+  font-weight: 600;
+  font-size: 13.5px;
+}
+.reminder-item .r-meta {
+  font-size: 11.5px;
+  color: var(--color-text-muted);
+  margin-top: 3px;
+}
+.reminder-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.watch-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.watch-toggle i {
+  color: var(--color-text-muted);
+}
+.watch-toggle.active i {
+  color: var(--color-accent);
+}
+
+/* ---------- Icon-only buttons used across the app ---------- */
+.btn i {
+  font-size: 0.95em;
+}
+.stat-icon i,
+.icon-btn i,
+.nav-icon i,
+.empty-icon i,
+.dz-icon i {
+  line-height: 1;
+}
+
+/* Desktop default; the mobile section below is the only place this
+   flips to `flex`, keeping both states of this component next to each
+   other's real trigger instead of split across the file. */
+.bottom-nav {
+  display: none;
+}
+
+/* =======================================================================
+   Mobile-first overhaul (<=768px) — the sidebar is replaced entirely by a
+   native-app-style bottom tab bar + a slide-up "More" sheet for the rest.
+   ======================================================================= */
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+
+  .main-area {
+    width: 100%;
+  }
+
+  .topbar {
+    padding: 0 var(--gutter);
+    padding-top: var(--safe-area-top);
+    height: calc(var(--mobile-topbar-height) + var(--safe-area-top));
+  }
+  .topbar-title {
+    font-size: 15px;
+  }
+  .topbar-actions {
+    gap: 8px;
+  }
+  /* Swap every full/short label pair to its concise form: the topbar title
+     (section 7) and search tabs (section 8) both render a full descriptive
+     span and a short one in the same markup — only visibility toggles. */
+  .label-full {
+    display: none;
+  }
+  .label-short {
+    display: inline;
+  }
+  /* Icon buttons deliberately do NOT shrink below --control-height here —
+     they're primary touch targets on the exact device class most likely
+     to be touch-only. Compactness must never cost tap-ability (section 7). */
+
+  .page-content {
+    padding-bottom: calc(var(--bottom-nav-height) + var(--safe-area-bottom) + 20px);
+  }
+
+  /* Was a hardcoded repeat(2, 1fr) — fine for today's short Arabic labels,
+     but a future card with a longer label (English "Pending Status
+     Requests" is already close) would wrap awkwardly at a forced 2-up
+     width. auto-fit + minmax lets it drop to 1 column on its own if a
+     card ever needs more room, instead of only fitting the specific
+     labels that exist today. */
+  .stat-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
+    gap: 10px;
+  }
+  .stat-card {
+    padding: 14px;
+  }
+  .stat-card .stat-value {
+    font-size: 21px;
+  }
+
+  .login-card {
+    grid-template-columns: 1fr;
+  }
+  .login-brand {
+    display: none;
+  }
+
+  .filters-row {
+    flex-direction: column;
+  }
+  .filters-row .form-group {
+    width: 100%;
+  }
+
+  .search-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dropzone {
+    /* Drag-and-drop is desktop-mouse behavior; touch users only ever use
+       the tap-to-browse affordance, so the generous drag target padding
+       is pure unused whitespace here (section 15) rather than functional. */
+    padding: 26px 16px;
+  }
+
+  .tabs {
+    gap: 0;
+  }
+  .tab-btn {
+    padding: 10px 12px;
+    font-size: 12.5px;
+  }
+
+  /* ---------- Tables -> stacked records (section 12) ----------
+     Applies only to row-based/record tables (search results, cases,
+     documents, users) via the .data-table modifier — NOT the Users
+     permissions matrix, which stays a plain horizontally-scrollable
+     table. A role x module permission grid is a genuinely two-dimensional
+     comparison (compare a role across all modules at a glance); collapsing
+     it into stacked key/value cards would destroy exactly the comparison
+     it exists to show, so contained horizontal scroll is the intentional,
+     documented exception here (section 13's "last resort" carve-out). */
+  .data-table thead {
+    /* Visually hidden but still in the accessibility tree, so a screen
+       reader navigating by table semantics still gets column headers —
+       plain `display:none` would remove them entirely. Sighted mobile
+       users get the header's meaning instead from each cell's own
+       data-label (below), which is the point of the record layout. */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .data-table,
+  .data-table tbody,
+  .data-table tr,
+  .data-table td {
+    display: block;
+    width: 100%;
+  }
+  .data-table tr {
+    background: var(--surface-sunken);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    margin-bottom: 10px;
+  }
+  .data-table tr:last-child {
+    margin-bottom: 0;
+  }
+  .data-table td {
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+  .data-table td:last-child {
+    border-bottom: none;
+  }
+  .data-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .modal-box {
+    max-width: 100%;
+    width: 100%;
+    max-height: 92vh;
+    border-radius: 1.125rem 1.125rem 0 0; /* 18px */
+  }
+
+  /* .btn/.form-group input etc. already carry --control-height (44px)
+     from their base rules — deliberately NOT reduced here. Shrinking
+     touch targets specifically on mobile would fix nothing and cost
+     tap-accuracy on exactly the device class that needs it most. */
+
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    height: calc(var(--bottom-nav-height) + var(--safe-area-bottom));
+    padding-bottom: var(--safe-area-bottom);
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    box-shadow: 0 -4px 16px rgba(18, 49, 90, 0.08);
+    z-index: 80;
+  }
+  .bn-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    background: var(--color-primary-dark);
+    border: none;
+    color: var(--color-surface);
+    font-family: inherit;
+    font-size: 0.6rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.5rem 0.25rem;
+    position: relative;
+  }
+  .bn-item i {
+    font-size: 1rem;
+  }
+  .bn-item.active {
+    color: var(--color-accent-light);
+  }
+  .bn-item.active::after {
+    /* Text/icon color alone is a subtle active-state signal on a small
+       touch target glanced at quickly; a small accent bar gives the
+       selected tab a clearer, more intentional visual anchor (section 14)
+       without adding a new color — reuses the existing accent token. */
+    content: '';
+    position: absolute;
+    bottom: 0.1rem;
+    inset-inline: 10%;
+    height: 0.3rem;
+    border-radius: 0.3rem;
+    background: var(--color-accent-light);
+  }
+  .bn-item .bn-badge {
+    position: absolute;
+    top: 0.1rem;
+    inset-inline-end: 22%;
+    background: var(--color-danger);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    border-radius: 20px;
+    padding: 0 4px;
+    min-width: 14px;
+    line-height: 14px;
+    text-align: center;
+  }
+}
+
+/* ---------- "More" bottom sheet (mobile) ---------- */
+.bottom-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 20, 40, 0.45);
+  z-index: 90;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.bottom-sheet-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.bottom-sheet {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  background: var(--color-surface);
+  border-radius: 20px 20px 0 0;
+  padding: 10px 16px calc(20px + var(--safe-area-bottom));
+  transform: translateY(100%);
+  transition: transform 0.25s ease;
+  max-height: 78vh;
+  overflow-y: auto;
+}
+.bottom-sheet-overlay.open .bottom-sheet {
+  transform: translateY(0);
+}
+.bottom-sheet-handle {
+  width: 40px;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--color-border);
+  margin: 6px auto 14px;
+}
+.bottom-sheet-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+}
+.bottom-sheet-item:last-child {
+  border-bottom: none;
+}
+.bottom-sheet-item i {
+  width: 20px;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+.bottom-sheet-item.danger {
+  color: var(--color-danger);
+}
+.bottom-sheet-item.danger i {
+  color: var(--color-danger);
+}
+
+/* ---------- Interactive dashboard stat cards ---------- */
+/* Every stat card is a real control that opens the list its number counted.
+   Previously they were inert numbers with no affordance, so users had no way
+   to know a figure was actionable — hence the hover lift, the pointer, the
+   focus ring and the explicit "View ..." line. */
+.stat-card-clickable {
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    border-color 0.12s ease;
+}
+.stat-card-clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md, 0 6px 18px rgba(0, 0, 0, 0.1));
+  border-color: var(--color-accent);
+}
+.stat-card-clickable:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+.stat-card .stat-action {
+  margin-top: 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--color-accent);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.85;
+}
+.stat-card-clickable:hover .stat-action {
+  opacity: 1;
+}
+/* The arrow points "forward" in reading order, so it must flip under RTL. */
+[dir='rtl'] .stat-action-arrow {
+  transform: scaleX(-1);
+}
+
+/* ---------- Row action clusters (hearings, search results) ---------- */
+.hearing-actions,
+.result-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+/* ---------- Active-filter chip (arriving from a stat card) ---------- */
+.filter-chip-row {
+  margin-bottom: 14px;
+}
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 6px 12px;
+  border-radius: 999px;
+  background: var(--color-info-bg);
+  color: var(--color-info);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.filter-chip-clear {
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+  border-radius: 50%;
+  line-height: 1;
+}
+.filter-chip-clear:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* ---------- Smart (system-generated) notifications ---------- */
+/* Deliberately unlike a normal notification: an automatic nudge must never be
+   mistaken for a colleague personally chasing you, and the lawyer's FYI copy
+   must not read as though they sent it themselves. */
+.notif-smart {
+  border-inline-start: 3px solid var(--color-accent);
+  background: linear-gradient(90deg, #fbf3e8 0%, transparent 60%);
+}
+.smart-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: 4px;
+}
+
+/* ---------- Timeline inline action ---------- */
+.btn-xs {
+  padding: 3px 8px;
+  font-size: 11px;
+  line-height: 1.5;
+  height: auto;
+}
+.ti-action {
+  margin-inline-start: 10px;
+  vertical-align: middle;
+}
+
+/* ---------- Useful Kuwait government websites ---------- */
+.useful-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+.useful-link {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  color: inherit;
+  background: var(--color-surface);
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease,
+    transform 0.12s ease;
+}
+.useful-link:hover {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+.useful-link:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+.useful-link .ul-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fbf3e8;
+  color: var(--color-accent);
+  font-size: 15px;
+}
+.useful-link .ul-body {
+  min-width: 0;
+}
+.useful-link .ul-name {
+  font-weight: 700;
+  font-size: 13.5px;
+  margin-bottom: 3px;
+}
+.useful-link .ul-ext {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  margin-inline-start: 3px;
+}
+.useful-link .ul-services {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+.useful-link .ul-benefit {
+  font-size: 11.5px;
+  color: var(--color-success, #2e7d32);
+  margin-top: 5px;
+}
+.useful-link .ul-url {
+  font-size: 11px;
+  color: var(--color-accent);
+  margin-top: 5px;
+  word-break: break-all;
+}
+
+/* ---------- Mandatory field indicators ---------- */
+/* A single convention used by every form in the app: put `required` on the
+   label and the asterisk is generated. Using ::after rather than typing "*"
+   into each label keeps it out of the translated strings, so Arabic and
+   English stay identical and no translator can accidentally drop it. */
+.form-group > label.required::after {
+  content: ' *';
+  color: var(--color-danger);
+  font-weight: 700;
+}
+/* Screen readers get the real signal from aria-required on the input; the
+   asterisk is decorative, so it is not announced twice. */
+.required-note {
+  font-size: 11.5px;
+  color: var(--color-text-muted);
+  margin: 2px 0 12px;
+}
+.required-note .req-star {
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   PRINTING
+   --------------------------------------------------------------------------
+   The application never prints the live page. js/print.js composes a
+   self-contained sheet into #print-root; that element is the ONLY thing
+   visible on paper, and is never visible on screen. Two consequences:
+
+     - Navigation, the top bar, the bottom nav, buttons, forms, toasts and any
+       open modal are excluded from the printout structurally, not by hiding
+       them one class at a time — nothing interactive is ever composed into
+       the sheet in the first place.
+     - Nothing is clipped. On screen, wide tables live inside `.table-wrap`
+       (overflow-x: auto) and document lists inside collapsible bodies; a
+       browser prints only the visible slice of an overflow box, which is why
+       "just call window.print()" loses columns and rows. The composed sheet
+       has no scrolling containers at all.
+   ========================================================================== */
+
+#print-root {
+  display: none;
+}
+
+@media print {
+  /* Everything the app draws on screen, gone. `#app-root` covers the shell
+     (sidebar, top bar, page content, bottom nav and its sheet); the other two
+     mount directly on <body> and so need naming separately. */
+  #app-root,
+  .toast-container,
+  .modal-overlay {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    margin: 0;
+    padding: 0;
+  }
+
+  #print-root {
+    display: block;
+    color: #000;
+    background: #fff;
+    font-size: 11pt;
+    line-height: 1.45;
+    /* Latin and Arabic both render well here, and the sheet must not depend
+       on the icon/webfont files being reachable from the print renderer. */
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+  }
+
+  @page {
+    margin: 14mm 12mm;
+  }
+
+  /* Repeat the table head on every page of a long list. */
+  #print-root thead {
+    display: table-header-group;
+  }
+  #print-root tr,
+  #print-root li,
+  #print-root .print-section {
+    page-break-inside: avoid;
+  }
+  #print-root h1,
+  #print-root h2 {
+    page-break-after: avoid;
+  }
+}
+
+/* Sheet layout. Defined outside the print query so the rules are readable and
+   maintainable as ordinary CSS; they only ever apply because #print-root is
+   display:none on screen. */
+.print-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  border-bottom: 2px solid #12315a;
+  padding-bottom: 8px;
+  margin-bottom: 14px;
+}
+.print-head .pb-name {
+  font-size: 15pt;
+  font-weight: 700;
+  color: #12315a;
+}
+.print-head .pb-sub {
+  font-size: 9pt;
+  color: #444;
+}
+.print-issued {
+  font-size: 8.5pt;
+  color: #333;
+  text-align: end;
+  line-height: 1.6;
+}
+.print-issued span {
+  color: #666;
+}
+
+.print-title {
+  font-size: 14pt;
+  margin: 0 0 2px;
+  color: #12315a;
+}
+.print-subtitle {
+  margin: 0 0 12px;
+  font-size: 10pt;
+  color: #444;
+}
+
+.print-meta,
+.print-pairs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 22px;
+  margin: 0 0 14px;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #f7f8fa;
+}
+.print-pairs {
+  background: none;
+  border: none;
+  padding: 0;
+}
+.print-meta > div,
+.print-pairs > div {
+  display: flex;
+  gap: 6px;
+  font-size: 9.5pt;
+  break-inside: avoid;
+}
+.print-meta dt,
+.print-pairs dt {
+  color: #555;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.print-meta dd,
+.print-pairs dd {
+  margin: 0;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.print-section {
+  margin-bottom: 16px;
+}
+.print-section h2 {
+  font-size: 11pt;
+  margin: 0 0 6px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid #ccc;
+  color: #12315a;
+}
+.print-count {
+  font-weight: 400;
+  color: #666;
+  font-size: 9pt;
+}
+
+.print-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9.5pt;
+}
+.print-table th,
+.print-table td {
+  border: 1px solid #bbb;
+  padding: 5px 7px;
+  text-align: start;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.print-table th {
+  background: #eef1f6;
+  font-weight: 700;
+  color: #12315a;
+}
+
+.print-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.print-list li {
+  border-bottom: 1px solid #ddd;
+  padding: 5px 0;
+}
+.print-list .pl-title {
+  font-size: 10pt;
+  font-weight: 600;
+}
+.print-list .pl-meta {
+  font-size: 9pt;
+  color: #444;
+}
+
+.print-text {
+  margin: 0;
+  font-size: 10pt;
+  white-space: pre-wrap;
+}
+.print-empty {
+  font-size: 9.5pt;
+  color: #666;
+  font-style: italic;
+  margin: 0;
+}
+
+.print-foot {
+  margin-top: 18px;
+  padding-top: 6px;
+  border-top: 1px solid #ccc;
+  font-size: 8.5pt;
+  color: #555;
+}

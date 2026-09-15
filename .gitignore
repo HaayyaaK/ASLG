@@ -1,0 +1,65 @@
+# OS / editor junk
+Thumbs.db
+.DS_Store
+desktop.ini
+*.swp
+.vscode/
+.idea/
+
+# Local tool preferences (machine-specific, not the project's own settings)
+.claude/settings.local.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Node (not currently used by this project, kept defensively)
+node_modules/
+.npm/
+.cache/
+
+# Env files: real secrets never committed; keep the *.example templates
+.env
+.env.*
+*.env
+!*.env.example
+
+# Ad-hoc DB dumps/backups someone might drop at the repo root
+backup_*.sql
+dump_*.sql
+*.dump
+
+# Generic secret-bearing file patterns
+config.local.*
+secrets.*
+*.pem
+*.key
+.htpasswd
+
+# Logs (generic; backend/logs/* below covers this app's own log directory)
+*.log
+logs/
+
+# Backend secrets & runtime data (backend/.gitignore also covers these)
+backend/.env
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/logs/*
+!backend/logs/.gitkeep
+pre_restore_backups/
+# Safety copy taken automatically before a Factory Reset. Contains a dump of
+# the live database plus the uploaded documents — production data, never
+# committed.
+pre_factory_reset_backup/
+
+# Staff/user data spreadsheet and the reports the provisioning tool derives
+# from it — never committed (see backend/provision_users_from_excel.py).
+# NOTE: DB.xlsx itself was already committed in this repo's initial commit
+# before this rule existed; this only stops it from being re-added if it's
+# ever modified. See the Part A report for how to purge it from history.
+DB.xlsx
+backend/provisioning_report_*.md
+backend/provisioning_preview_*.sql
+backend/TEMP_PASSWORDS_*.txt
