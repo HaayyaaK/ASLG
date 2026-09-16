@@ -40,7 +40,20 @@ def stats(user: User = Depends(get_current_user), db: Session = Depends(get_db))
     case_q = db.query(Case).filter(Case.status == "active")
     if case_ids is not None:
         case_q = case_q.filter(Case.id.in_(case_ids)) if case_ids else case_q.filter(False)
-    active_cases = case_q.count()
+    # .with_entities(Case.id) before .count() is load-bearing, not a style
+    # choice: Query.count() wraps the FULL entity SELECT (every mapped
+    # column) in a `SELECT count(*) FROM (...)` subquery regardless of any
+    # column's `deferred=True` -- deferred only skips a column when the
+    # ORM is populating real Case objects (.all()/.first()), not when
+    # counting. Case now carries columns (case_type_id, procedural_status_id,
+    # last_official_check_at) that don't exist on the live `cases` table
+    # until db/migration_procedural_intelligence.sql is applied, so the
+    # unqualified `case_q.count()` 500'd here in production (confirmed via
+    # backend/logs/uvicorn-stdout.log_13956_2026916125625.log:
+    # "Unknown column 'cases.case_type_id' in 'field list'"). Narrowing to
+    # just the id column avoids selecting any of them, independent of
+    # whether the migration has landed.
+    active_cases = case_q.with_entities(Case.id).count()
 
     # "Today" is the firm's Kuwait business date, not the server's UTC date.
     # Stored values are naive UTC, so the Kuwait day is expressed as the
@@ -61,7 +74,12 @@ def stats(user: User = Depends(get_current_user), db: Session = Depends(get_db))
     doc_q = db.query(Document).filter(Document.status == "pending")
     if doc_level == "own":
         doc_q = doc_q.join(Case).filter(Case.id.in_(case_ids)) if case_ids else doc_q.filter(False)
-    pending_documents = doc_q.count()
+    # Same reason as active_cases above: Document now carries a deferred
+    # doc_class_id column that doesn't exist on the live `documents` table
+    # yet, and Query.count() ignores `deferred` -- confirmed 500ing with
+    # "Unknown column 'documents.doc_class_id' in 'field list'" until this
+    # was narrowed to just the id column.
+    pending_documents = doc_q.with_entities(Document.id).count()
 
     notif_q = db.query(Notification).filter(
         Notification.is_read == False,  # noqa: E712
