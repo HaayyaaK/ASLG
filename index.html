@@ -12,6 +12,15 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png" />
 <link rel="manifest" href="/assets/site.webmanifest" />
 <link rel="stylesheet" href="/_shared/fontawesome/7.3.1/css/all.min.css" />
+<!-- Preloaded so the login screen paints its photograph in the same frame as
+     the card, instead of flashing the fallback gradient first. Declared here
+     rather than relying on CSS discovery because a background-image inside
+     styles.css is only fetched after the stylesheet parses AND the element
+     matches — two round-trips later than this. `fetchpriority="high"` keeps
+     it ahead of the icon font, which the login screen doesn't need first.
+     Harmless on every other page: the file is already cached by then, and a
+     preload that goes unused costs one cached request, not a broken layout. -->
+<link rel="preload" as="image" href="/assets/background.jpg" fetchpriority="high" />
 <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>

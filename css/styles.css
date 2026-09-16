@@ -187,6 +187,16 @@
   /* ---- Typography ---- */
   --font-ar: 'IBM Plex Sans Arabic', 'Segoe UI', sans-serif;
   --font-en: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+
+  /* ---- Glassmorphism (currently only the login card uses this; kept as
+     named tokens rather than inline literals so any future glass surface
+     reads from the same values). Tuned against a dark background image —
+     re-check contrast on .login-form-wrap's own near-opaque panel (not
+     these tokens) if this is ever pointed at a light background instead. */
+  --glass-bg: rgba(255, 255, 255, 0.12);
+  --glass-border: rgba(255, 255, 255, 0.25);
+  --glass-blur: 1.375rem; /* 22px */
+  --glass-saturate: 160%;
 }
 
 /* Canonical breakpoints (hardcoded in @media rules — custom properties
@@ -246,19 +256,141 @@ a {
 
 /* ---------- Login ---------- */
 .login-screen {
+  /* 100vh first as the universal fallback, then 100dvh where supported.
+     On mobile Safari/Chrome, 100vh is the viewport height with the URL bar
+     RETRACTED, so at rest the element overflows by the bar's height and the
+     photograph's bottom edge sits off-screen (and the layout shifts as the
+     bar hides on scroll). 100dvh tracks the *actual* visible height, which
+     is what a full-bleed background needs. Older browsers simply never
+     apply the second declaration. */
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(
-    135deg,
-    var(--color-primary-dark),
-    var(--color-primary) 55%,
-    var(--color-primary-light)
-  );
+  /* Three stacked layers (first listed paints on top): a brand-colored tint
+     (keeps the card and orb colors legible no matter how bright/busy the
+     photo is), the photo itself, then the original solid gradient as a
+     fallback — if background.jpg 404s, the image layer simply doesn't paint
+     and the gradient shows through underneath, so this never depends on
+     the file existing (same "never a broken-image icon" rule brandMark()
+     already follows elsewhere in this file).
+     `cover` rescales live on every resize, so the image always fills the
+     viewport edge-to-edge with no letterboxing (no white/black bars) at any
+     aspect ratio, and `no-repeat` means a tiling seam is impossible even if
+     a future image were smaller than the viewport. `background-attachment`
+     is left at its default (scroll) rather than `fixed`, which is unreliable
+     on mobile Safari and unnecessary here since .login-screen has no
+     internal scrolling content of its own.
+
+     The DEFAULT position is `center center`; portrait phones override it
+     below — see the comment on that media query for why the subject's
+     off-centre placement in this particular photograph makes that
+     necessary. */
+  background-image:
+    linear-gradient(
+      135deg,
+      rgba(10, 32, 56, 0.6),
+      rgba(18, 49, 90, 0.4) 55%,
+      rgba(28, 74, 130, 0.3)
+    ),
+    url('/assets/background.jpg'),
+    linear-gradient(
+      135deg,
+      var(--color-primary-dark),
+      var(--color-primary) 55%,
+      var(--color-primary-light)
+    );
+  background-size: cover, cover, cover;
+  background-position: center center, center center, center center;
+  background-repeat: no-repeat, no-repeat, no-repeat;
   padding: var(--gutter);
+}
+
+/* ---------- Login background: keeping the subject in frame ----------
+   `background.jpg` is a 2440x1440 photograph — aspect 1.694, i.e. roughly
+   5:3, NOT the 16:9 the earlier 1249x700 source was. Measured against the
+   file itself, its subject (the brass scales, sampled as the warm pixels
+   that are the only saturated thing in an otherwise blue-grey scene)
+   occupies x 58.3%-82.9% and y 24.4%-84%. So the subject is both
+   off-centre horizontally and a full quarter of the frame wide.
+
+   With `cover`, a viewport narrower than the image is filled by matching
+   the image's HEIGHT and cropping its WIDTH, and the surviving slice is
+   (viewport aspect / image aspect) of the original width:
+
+     375x667  -> 33.2% slice      768x1024 -> 44.3% slice
+     393x852  -> 27.2% slice      414x896  -> 27.3% slice
+
+   Centred, that slice lands on the empty glass partition around x=44-56%
+   and crops the scales out of frame entirely, leaving a login screen
+   backed by featureless grey. So the portrait override shifts HORIZONTALLY
+   toward the subject, rather than the vertical `center top` that a
+   top-weighted photograph would want. Vertical stays centred because the
+   scales already span most of the image's height.
+
+   Why 78% and not the 72% this rule used against the old source: the
+   subject is 24.6% of the image wide, and the narrowest slice above is
+   27.2%, so there is only ~2.6% of total slack. Solving
+   `position x (1 - slice)` to keep 58.3%-82.9% inside the window gives
+   [76.5%, 80.1%] at 393x852 and wider ranges everywhere else; 78% is the
+   midpoint of that intersection. At 72% the right-hand pan and chain fell
+   outside the window by ~3% of the image width and were visibly clipped.
+
+   Deliberately a constant rather than a `clamp()` on viewport width: the
+   variable that drives the crop is the viewport's ASPECT RATIO, which no
+   width-based `clamp()` can track, and the feasible band above is narrow
+   enough that a single value is already at its optimum for every portrait
+   size in range.
+
+   Written as `orientation: portrait` AND a width ceiling, not width alone:
+   a tablet held in portrait (768x1024, 0.75) crops enough to need this too,
+   while a small laptop window at 800px wide is landscape and does not. */
+@media (orientation: portrait) and (max-width: 900px) {
+  .login-screen {
+    background-position: 78% center, 78% center, 78% center;
+  }
+}
+
+/* There is deliberately NO mobile-landscape override here.
+   An earlier `@media (orientation: landscape) and (max-height: 500px)` rule
+   re-asserted `center center` for phones held sideways. It was removed
+   because it was doing nothing it claimed to do:
+
+     - Where it DID win (landscape, short, aspect under 2:1) it set exactly
+       the value the default rule already sets, so it was a no-op.
+     - Where it looked like it mattered it did not win at all. A phone in
+       landscape is typically 2.1-2.2 wide (iPhone 14 Pro is 852x393 =
+       2.168, iPhone XR 896x414 = 2.164), which matches the `min-aspect-
+       ratio: 2/1` rule below. Equal specificity, later in the source, so
+       the ultra-wide rule takes it — as verified by reading the computed
+       `background-position` at 852x393, which is 50% 58%, not 50% 50%.
+
+   That outcome is the correct one, so only the misleading rule is gone:
+   at 2.168 the viewport crops 22% of the image's height, which is the
+   ultra-wide rule's problem, not the "nothing is cropped" case the removed
+   comment described. And across every landscape viewport where the
+   ultra-wide rule does NOT apply (aspect under 2:1), at most 15% of either
+   axis is cropped and the subject stays inside the frame at plain centre —
+   so no override is needed there either. */
+
+/* Ultra-wide (2:1 and beyond — which includes phones in landscape, see
+   above): now the WIDTH matches and the top/bottom are cropped instead.
+   At 2560x1080 only 71.5% of the image's height survives (1.694 / 2.370),
+   against a subject spanning y 24.4%-84%.
+
+   `center 40%` — correct for the old 16:9 source, which lost less height
+   here — now places the window at y 11.4%-82.9% and slices the foot of the
+   scales' base off the bottom. Keeping 24.4%-84% inside needs a position in
+   [50.9%, 78.5%]; 58% sits inside that with margin at both edges and still
+   crops away the brightest part of the reflective foreground, which is what
+   the upward bias was for. */
+@media (min-aspect-ratio: 2/1) {
+  .login-screen {
+    background-position: center 58%, center 58%, center 58%;
+  }
 }
 
 .login-orb {
@@ -317,19 +449,23 @@ a {
 }
 
 .login-card {
+  /* This is the ONLY glassed surface on the page — deliberately. Everything
+     inside it (.login-form-wrap's inputs/labels/title, the submit button,
+     the error box) stays on its own near-opaque or fully solid background
+     so legibility never depends on what happens to be behind the card. */
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 940px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  max-width: 58.75rem; /* 940px */
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   overflow: hidden;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  backdrop-filter: blur(22px) saturate(160%);
-  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
 }
 
 /* Mobile override for .login-card/.login-brand lives in the consolidated
@@ -379,12 +515,90 @@ a {
 }
 
 .login-form-wrap {
+  /* Ported from the same login treatment on alseif-connect
+     (mobile-app/alseif-connect/public/css/app.css, .login__card): glass
+     panel + white text + a blurred dark halo for guaranteed contrast,
+     instead of the opaque backing this used before. Everything below is
+     scoped under .login-form-wrap specifically so none of it leaks into
+     the shared .form-group/input rules the rest of the app relies on —
+     same reasoning the reference file documents for its own .login__card
+     scoping. */
+  position: relative;
+  z-index: 1;
   padding: clamp(1.25rem, 3vw + 0.5rem, 2.75rem) clamp(1rem, 3vw, 2.25rem);
-  background: rgba(255, 255, 255, 0.94);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+}
+/* A soft blurred dark halo confined behind this panel's own content, not a
+   box — it stays invisible as a shape, but boosts contrast for the
+   title/labels/inputs no matter how light the photo is at that spot.
+   z-index -1 keeps it inside .login-form-wrap's own stacking context
+   (established by position:relative + z-index:1 above), so it sits behind
+   the text but still above .login-screen's photo. */
+.login-form-wrap::before {
+  content: '';
+  position: absolute;
+  inset: -10% -8%;
+  z-index: -1;
+  background: radial-gradient(
+    60% 68% at 50% 42%,
+    rgba(3, 6, 14, 0.55) 0%,
+    rgba(3, 6, 14, 0.28) 55%,
+    transparent 82%
+  );
+  filter: blur(1rem);
 }
 .login-form-wrap h2,
 .login-form-wrap p.text-muted {
-  color: var(--color-text);
+  color: #fff;
+  text-shadow:
+    0 0.125rem 0.25rem rgba(0, 0, 0, 0.6),
+    0 0.25rem 1.25rem rgba(0, 0, 0, 0.5);
+}
+.login-form-wrap .form-group label {
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow:
+    0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.6),
+    0 0.125rem 0.5rem rgba(0, 0, 0, 0.45);
+}
+.login-form-wrap .form-group input {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.38);
+  color: #fff;
+  backdrop-filter: blur(0.625rem);
+  -webkit-backdrop-filter: blur(0.625rem);
+}
+.login-form-wrap .form-group input::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+}
+.login-form-wrap .form-group input:focus {
+  border-color: var(--color-accent-light);
+  background: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 0 0 3px rgba(230, 194, 122, 0.28);
+}
+/* Matches the base .form-group.invalid .field-error selector's own
+   specificity/condition (only visible once actually invalid) — a plain
+   `.login-form-wrap .field-error` rule would have overridden the base
+   `display: none` unconditionally and shown the chip on every fresh load. */
+.login-form-wrap .form-group.invalid .field-error {
+  color: #fff;
+  background: var(--color-danger);
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-sm);
+  margin-top: 0.375rem;
+}
+/* Browsers without backdrop-filter would otherwise show barely-there glass
+   over a busy photo — fall back to solid-enough tinted panels instead,
+   same defensive rule the reference file uses for its own inputs. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .login-form-wrap {
+    background: rgba(10, 32, 56, 0.72);
+  }
+  .login-form-wrap .form-group input {
+    background: rgba(10, 32, 56, 0.55);
+  }
 }
 
 .form-group {
@@ -835,6 +1049,65 @@ a {
   text-transform: uppercase;
   color: var(--color-text-muted);
   margin: 4px 0 10px;
+}
+
+/* ---------- Procedural Intelligence: Case Details "Procedure" block ----------
+   Logical (inline-start/end) properties throughout, so this mirrors correctly
+   under [dir="rtl"] with no separate rule, matching every other panel here. */
+.proc-latest {
+  background: var(--color-info-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-3);
+  font-size: var(--text-sm);
+}
+.proc-latest-label {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted);
+  margin-bottom: 2px;
+}
+.proc-next-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.proc-action-card {
+  border: 1px solid var(--color-border);
+  border-inline-start: 3px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+}
+.proc-history {
+  margin-top: var(--space-3);
+}
+.proc-history > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  padding: var(--space-2) 0;
+}
+.proc-history[open] > summary {
+  color: var(--color-text);
+}
+
+/* ---------- Official Search Engine: source-of-truth disclaimer + sync panel --- */
+.search-source-notice {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  background: var(--color-warning-bg);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 /* ---------- Dashboard: Quick Actions (Admin/Lawyer case browser) ----------
@@ -1701,13 +1974,6 @@ tbody tr:hover {
     font-size: 21px;
   }
 
-  .login-card {
-    grid-template-columns: 1fr;
-  }
-  .login-brand {
-    display: none;
-  }
-
   .filters-row {
     flex-direction: column;
   }
@@ -1871,6 +2137,90 @@ tbody tr:hover {
     min-width: 14px;
     line-height: 14px;
     text-align: center;
+  }
+}
+
+/* =======================================================================
+   Login card responsiveness — deliberately its OWN breakpoints, separate
+   from the app-shell's 768px sidebar/bottom-nav switch above. The login
+   screen has no sidebar and isn't part of the authenticated shell, so
+   there is no reason its card has to fold at the exact same width as
+   that unrelated component; tying it to 768px was hiding .login-brand
+   on genuinely roomy tablet/small-laptop widths (up to 1024px) that have
+   plenty of space for two columns.
+
+   Three tiers, using non-overlapping min/max ranges (not cascade order)
+   so which rule applies is a fact about the viewport, not about where
+   these blocks happen to sit in the file:
+     >1024px            desktop  — untouched, base .login-card/.login-brand
+                                    rules already give the full two-column
+                                    layout with .login-brand visible.
+     641px – 1024px      tablet  — still two columns, .login-brand still
+                                    visible, just narrower so the form
+                                    column gets a bit more of the width.
+     <=640px              phone  — only width genuinely too narrow for two
+                                    columns side by side; collapses to one
+                                    column with .login-brand restyled into a
+                                    compact horizontal header strip above
+                                    the form instead of a side column.
+   ======================================================================= */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .login-card {
+    grid-template-columns: 0.85fr 1.15fr;
+  }
+  .login-brand {
+    padding: clamp(1.25rem, 3vw, 3rem) clamp(1rem, 2.5vw, 2.25rem);
+  }
+}
+@media (max-width: 640px) {
+  .login-card {
+    grid-template-columns: 1fr;
+  }
+  /* No room for a side panel at this width, but the branding shouldn't
+     just vanish — .login-brand is the FIRST child of .login-card, so a
+     single-column grid already places it above .login-form-wrap with no
+     markup change; it's restyled here from a tall side column into a
+     compact horizontal header strip (logo beside the wordmark) instead of
+     being hidden. The copyright line (the login-brand's second child div)
+     is dropped at this width — it's not essential on a phone header and
+     would otherwise force the strip taller than the logo+name really need. */
+  .login-brand {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: var(--space-4) var(--space-5);
+    border-inline-end: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  .login-brand > div:last-child {
+    display: none;
+  }
+  .login-brand > div:first-child {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    column-gap: var(--space-3);
+  }
+  .login-brand .brand-mark {
+    grid-row: 1 / 3;
+    width: 2.75rem; /* 44px — down from the desktop side-panel's 56px */
+    height: 2.75rem;
+    font-size: 1rem;
+    /* Same fill the desktop side-panel badge uses — restated explicitly
+       here (rather than left to inherit) so the mobile badge is
+       guaranteed to match it rather than depending on cascade order. */
+    background: var(--color-accent);
+  }
+  .login-brand h1 {
+    grid-column: 2;
+    margin-top: 0;
+    margin-bottom: 0.25rem;
+    font-size: 1.0625rem; /* --text-lg */
+  }
+  .login-brand p {
+    grid-column: 2;
+    margin: 0;
+    font-size: 0.8125rem; /* --text-sm */
   }
 }
 
