@@ -36,6 +36,15 @@ class Settings(BaseSettings):
     seed_admin_password: str | None = Field(default=None, alias="ASLG_SEED_ADMIN_PASSWORD")
     seed_staff_password: str | None = Field(default=None, alias="ASLG_SEED_STAFF_PASSWORD")
 
+    # Read by routers/internal.py's POST /api/internal/run-escalations only —
+    # a shared secret the Windows Scheduled Task (description.md's
+    # replacement for the "no scheduler in this app" gap) sends as a header,
+    # since that endpoint has no logged-in user to authenticate as. NOT a
+    # JWT and NOT a user password. Optional with no default, like the seed
+    # passwords above: unset means the endpoint refuses every call rather
+    # than falling back to any hardcoded value.
+    internal_task_token: str | None = Field(default=None, alias="ASLG_INTERNAL_TASK_TOKEN")
+
     upload_dir: str = "./uploads"
     max_upload_mb: int = 25
 

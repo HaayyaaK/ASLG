@@ -14,6 +14,10 @@ import {
   linkUserToCase,
   unlinkCaseUser,
   listLinkableClients,
+  listCaseProcedures,
+  previewNextActions,
+  listProcedureTypes,
+  recordProcedure,
 } from '../api.js';
 import {
   formatDate,
@@ -317,6 +321,14 @@ export async function openCaseDetail(caseId, user) {
     ${c.timeline.length === 0 ? `<p class="text-muted">${t('timeline_empty')}</p>` : ''}
 
     ${
+      getPermission('procedures') !== 'none'
+        ? `
+    <h4>${t('procedure_section_title')}</h4>
+    <div id="procedure-section"><p class="text-muted">${icon('spinner', 'fa-spin')}</p></div>`
+        : ''
+    }
+
+    ${
       canManageLinks
         ? `
     <h4>${t('linked_clients')}</h4>
@@ -362,6 +374,9 @@ export async function openCaseDetail(caseId, user) {
 
   if (canManageLinks) {
     wireLinkedClients(overlay, c);
+  }
+  if (getPermission('procedures') !== 'none') {
+    wireProcedureSection(overlay, c, user);
   }
 
   // The case record on paper: identity, current position, the whole timeline
@@ -575,6 +590,165 @@ function wireLinkedClients(overlay, c) {
   });
 
   refreshLinks();
+}
+
+/**
+ * Procedural Intelligence block inside the Case Details modal —
+ *   Current Status -> Latest Event -> Required Next Procedure ->
+ *   Responsible User -> Deadline -> Reminder/Notification -> Completion
+ *
+ * "Latest Event" and "Required Next Procedure" are shown from
+ * previewNextActions() (procedures.next_actions() on the server — never
+ * persists anything by itself); "Record Procedure" is the only action that
+ * writes anything, via POST /api/procedures/{case_id}. A `own`-level
+ * (Client) viewer sees the read-only history/next-action cards with no
+ * "Record Procedure" button at all — the same edit/full gate the rest of
+ * this modal already uses for the stage select and note box.
+ */
+function wireProcedureSection(overlay, c, user) {
+  const host = overlay.querySelector('#procedure-section');
+  if (!host) return;
+  const perm = getPermission('procedures');
+  const canRecord = perm === 'full' || perm === 'edit';
+
+  async function refresh() {
+    host.innerHTML = `<p class="text-muted">${icon('spinner', 'fa-spin')}</p>`;
+    let procedures = [];
+    let nextActions = [];
+    try {
+      [procedures, nextActions] = await Promise.all([listCaseProcedures(c.id), previewNextActions(c.id)]);
+    } catch (err) {
+      host.innerHTML = `<p class="text-muted">${escapeHtml(err.message)}</p>`;
+      return;
+    }
+    const lang = getLang();
+    const latest = procedures[0]; // server orders newest-first
+
+    host.innerHTML = `
+      <div class="proc-latest">
+        <span class="proc-latest-label">${t('proc_latest_event')}</span>
+        ${
+          latest
+            ? `<b>${escapeHtml(lang === 'ar' ? latest.procedure_name_ar : latest.procedure_name_en)}</b>
+               <span class="text-muted">— ${formatDate(latest.occurred_at)}</span>
+               ${sourceTierBadge(latest.source_tier)}`
+            : `<span class="text-muted">${t('proc_no_events_yet')}</span>`
+        }
+      </div>
+      <div class="proc-next-actions">
+        ${
+          nextActions.length
+            ? nextActions
+                .map(
+                  (a) => `
+              <div class="proc-action-card">
+                <div>
+                  <b>${escapeHtml(lang === 'ar' ? a.expected_procedure_name_ar : a.expected_procedure_name_en)}</b>
+                  ${confidenceBadge(a.confidence)}
+                </div>
+                <div class="text-muted" style="font-size:12.5px;">${t('proc_due')}: ${formatDate(a.due_at)}</div>
+                ${a.legal_citation ? `<div class="text-muted" style="font-size:11.5px;">${t('proc_legal_basis')}: ${escapeHtml(a.legal_citation)}</div>` : ''}
+              </div>`,
+                )
+                .join('')
+            : `<p class="text-muted">${t('proc_no_rule_matches')}</p>`
+        }
+      </div>
+      ${canRecord ? `<button class="btn btn-outline btn-sm" id="proc-record-btn">${icon('plus')} ${t('proc_record_procedure')}</button>` : ''}
+      <div id="proc-record-form-host"></div>
+      <details class="proc-history">
+        <summary>${t('proc_full_history')} (${procedures.length})</summary>
+        ${
+          procedures.length
+            ? procedures
+                .map(
+                  (p) => `
+              <div class="hearing-row">
+                <div>
+                  <b>${escapeHtml(lang === 'ar' ? p.procedure_name_ar : p.procedure_name_en)}</b>
+                  ${sourceTierBadge(p.source_tier)}
+                  <div class="hearing-meta">${escapeHtml(lang === 'ar' ? p.recorded_by_name_ar : p.recorded_by_name_en)} — ${escapeHtml(p.notes_en || p.notes_ar || '')}</div>
+                </div>
+                <div class="text-muted" style="font-size:11.5px;">${formatDate(p.occurred_at)}</div>
+              </div>`,
+                )
+                .join('')
+            : `<p class="text-muted">${t('proc_no_events_yet')}</p>`
+        }
+      </details>
+    `;
+
+    host.querySelector('#proc-record-btn')?.addEventListener('click', async () => {
+      const formHost = host.querySelector('#proc-record-form-host');
+      if (formHost.innerHTML) { formHost.innerHTML = ''; return; }
+      let types = [];
+      try {
+        types = await listProcedureTypes();
+      } catch (err) {
+        toast(err.message, 'error');
+        return;
+      }
+      formHost.innerHTML = `
+        <div class="search-form-grid" style="margin-top:10px;">
+          <div class="form-group">
+            <label>${t('proc_type')}</label>
+            <select id="proc-type-select">
+              ${types.map((pt) => `<option value="${pt.id}">${escapeHtml(lang === 'ar' ? pt.name_ar : pt.name_en)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>${t('proc_occurred_at')}</label>
+            <input type="date" id="proc-date-input" value="${new Date().toISOString().slice(0, 10)}"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>${t('proc_notes')}</label>
+          <textarea id="proc-notes-input" rows="2"></textarea>
+        </div>
+        <button class="btn btn-primary btn-sm" id="proc-record-submit">${icon('paper-plane')} ${t('proc_record_procedure')}</button>
+      `;
+      formHost.querySelector('#proc-record-submit').addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        const typeId = Number(formHost.querySelector('#proc-type-select').value);
+        const dateVal = formHost.querySelector('#proc-date-input').value;
+        const notes = formHost.querySelector('#proc-notes-input').value.trim();
+        if (!dateVal) { toast(t('proc_date_required'), 'error'); return; }
+        btn.disabled = true;
+        try {
+          await recordProcedure(c.id, {
+            procedure_type_id: typeId,
+            occurred_at: new Date(dateVal + 'T00:00:00Z').toISOString(),
+            notes_en: notes || null,
+          });
+          toast(t('proc_recorded_success'), 'success');
+          formHost.innerHTML = '';
+          await refresh();
+        } catch (err) {
+          toast(err.message, 'error');
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
+  refresh();
+}
+
+function confidenceBadge(confidence) {
+  return confidence === 'confirmed'
+    ? `<span class="badge badge-success">${t('proc_confidence_confirmed')}</span>`
+    : `<span class="badge badge-warning" title="${t('proc_confidence_provisional_hint')}">${t('proc_confidence_provisional')}</span>`;
+}
+
+function sourceTierBadge(tier) {
+  const map = {
+    official_verified: 'badge-success',
+    official_inferred: 'badge-info',
+    firm_entered: 'badge-muted',
+    ai_suggested: 'badge-warning',
+    unverified: 'badge-warning',
+  };
+  return `<span class="badge ${map[tier] || 'badge-muted'}">${t('proc_tier_' + (tier || 'unverified'))}</span>`;
 }
 
 async function openNewCaseForm(onCreated) {

@@ -1,5 +1,5 @@
 import { t, getLang } from "../i18n.js";
-import { getDashboardStats, getUpcomingHearings, getDashboardTaskStats, getPermission, listCases } from "../api.js";
+import { getDashboardStats, getUpcomingHearings, getDashboardTaskStats, getPermission, listCases, listDeadlines, listStaleOfficialSync, syncDeadlines } from "../api.js";
 import { formatDate, icon, parseServerDate, toast, escapeHtml } from "../ui.js";
 import { openCaseDetail } from "./cases.js";
 import { canRequestUpdate, openRequestUpdateDialog } from "../request-update.js";
@@ -39,6 +39,10 @@ const CARD_TARGETS = {
   overdue_tasks: { route: "reminders", filter: "overdue" },
   pending_status_requests: { route: "reminders", filter: "status-requests" },
   tasks_i_assigned: { route: "reminders", filter: "assigned-by-me" },
+  deadlines_due_week: { route: "deadlines", filter: "" },
+  deadlines_overdue: { route: "deadlines", filter: "" },
+  deadlines_provisional: { route: "deadlines", filter: "" },
+  cases_sync_stale: { route: "deadlines", filter: "" },
 };
 
 function go(key) {
@@ -51,6 +55,7 @@ export async function render(container, user) {
   destroy();
   const lang = getLang();
   const showTaskStats = getPermission("reminders") !== "none";
+  const showDeadlineStats = getPermission("deadlines") !== "none";
   const showQuickActions = canSeeQuickActions(user);
 
   container.innerHTML = `
@@ -65,6 +70,11 @@ export async function render(container, user) {
     ${showTaskStats ? `
     <div class="stat-section-label">${t("stat_tasks_section")}</div>
     <div class="stat-grid" id="task-stat-grid">
+      ${[1, 2, 3, 4].map(() => `<div class="stat-card"><div class="text-muted">${icon("spinner", "fa-spin")}</div></div>`).join("")}
+    </div>` : ""}
+    ${showDeadlineStats ? `
+    <div class="stat-section-label">${t("stat_deadlines_section")}</div>
+    <div class="stat-grid" id="deadline-stat-grid">
       ${[1, 2, 3, 4].map(() => `<div class="stat-card"><div class="text-muted">${icon("spinner", "fa-spin")}</div></div>`).join("")}
     </div>` : ""}
     <div class="panel">
@@ -116,6 +126,29 @@ export async function render(container, user) {
       `;
     } catch {
       taskGridEl.innerHTML = `<p class="text-muted">—</p>`;
+    }
+  }
+
+  if (showDeadlineStats) {
+    const deadlineGridEl = container.querySelector("#deadline-stat-grid");
+    try {
+      // Idempotent, mirroring escalation's own on-request contract — see
+      // procedures.py's module docstring.
+      await syncDeadlines();
+      const [openDeadlines, stale] = await Promise.all([listDeadlines({ status_filter: "open" }), listStaleOfficialSync()]);
+      const now = Date.now();
+      const weekAhead = now + 7 * 86400000;
+      const dueThisWeek = openDeadlines.filter((d) => new Date(d.due_at).getTime() <= weekAhead).length;
+      const overdue = openDeadlines.filter((d) => new Date(d.due_at).getTime() < now).length;
+      const provisional = openDeadlines.filter((d) => d.confidence === "provisional").length;
+      deadlineGridEl.innerHTML = `
+        ${statCard("deadlines_due_week", "hourglass-half", "var(--color-warning)", "var(--color-warning-bg)", dueThisWeek, t("stat_deadlines_due_week"), t("card_action_view_deadlines"))}
+        ${statCard("deadlines_overdue", "triangle-exclamation", "var(--color-danger)", "var(--color-danger-bg)", overdue, t("stat_deadlines_overdue"), t("card_action_view_deadlines"))}
+        ${statCard("deadlines_provisional", "circle-question", "var(--color-info)", "var(--color-info-bg)", provisional, t("stat_deadlines_provisional"), t("card_action_view_deadlines"))}
+        ${statCard("cases_sync_stale", "rotate", "var(--color-accent)", "#fbf3e8", (stale.stale_case_ids || []).length, t("stat_cases_sync_stale"), t("card_action_view_deadlines"))}
+      `;
+    } catch {
+      deadlineGridEl.innerHTML = `<p class="text-muted">—</p>`;
     }
   }
 

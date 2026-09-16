@@ -39,6 +39,7 @@ everywhere.
 - [2.6 Notifications](#26-notifications)
 - [2.7 Users & Permissions](#27-users--permissions) *(System Admin only)*
 - [2.8 Activity Log](#28-activity-log) *(System Admin only)*
+- [2.9 Procedural Intelligence — Deadlines & the Procedure tab](#29-procedural-intelligence--deadlines--the-procedure-tab)
 
 **Part 3 — How the system alerts you**
 - [3.1 The three warnings before every deadline](#31-the-three-warnings-before-every-deadline)
@@ -1002,6 +1003,34 @@ investigating.
 
 ---
 
+## 2.9 Procedural Intelligence — Deadlines & the Procedure tab
+
+**Not yet active on this server** — this feature is built and tested but its database changes have not been applied to the live database yet. Everything below describes it so you know what to expect once it is switched on; until then you won't see it.
+
+Once active, this feature answers one question for any case: **what actually happened last, what's required next, who's responsible for it, and by when?**
+
+### Where you'll find it
+
+- **Case Details → Procedural Intelligence.** Opening any case now shows its latest recorded event, any deadlines the system has worked out from it, and a **Record Procedure** button to log the next real thing that happens (a hearing, a judgment, a filing, anything). A full history of every event on the case sits below, collapsed by default.
+- **Deadlines** (new sidebar entry). Every deadline across every case you can see, in one list — overdue ones in red, with **Confirm** and **Waive** buttons for the ones you can act on.
+- **Official Search Engine → Check Official Portal.** A small panel under the search tabs: pick a case and a real government source (MOJ e-Services, Sahel, etc.), click **Open official portal** to sign in yourself in a new tab, then come back and record what you found. Nothing you see on the five search tabs above it is live government data — it never has been, it's the firm's own records styled to look familiar — and this panel is the honest, human-in-the-loop way to actually check the real thing.
+- **Procedure Rules** (new sidebar entry, System Admin and Lawyer only). The list of legal deadline rules the system knows about — each with its legal citation and whether it's been switched on.
+
+### The most important thing to understand: a "Suggested" badge is not a fact
+
+Every deadline you see carries one of two badges:
+
+- **Confirmed** (green) — a lawyer has verified the legal rule behind this date against the actual law. You'll get the normal three-warning countdown for it (see [3.1](#31-the-three-warnings-before-every-deadline)).
+- **Suggested** (amber) — the system computed this date from a rule nobody has verified yet. It's a starting point, not something to file a deadline by without checking. A Client account never sees a Suggested item at all — only Confirmed ones on their own case.
+
+If a case's latest event has no rule at all behind it, the Procedure tab says so plainly ("No verified rule covers this step") instead of guessing a date. That's deliberate: this system is built to never let an AI-computed guess look like a legal fact.
+
+### Turning a rule on (System Admin, or a firm-owner Lawyer, only)
+
+On the **Procedure Rules** page, an unverified rule can only be switched on after you've checked its cited law yourself and ticked a box confirming you did. This is the one action in this whole feature that asserts a real legal fact, so it's deliberately made to take a moment of real attention rather than a single careless click.
+
+---
+
 
 # Part 3 — How the system alerts you
 
@@ -1134,6 +1163,10 @@ records) · **none** (no access, the menu entry is hidden).
 | Users & Permissions | full | **none** | **none** | **none** | **none** |
 | Reminders & Follow-ups | full | full | edit | view | **none** |
 | Activity Log | full | **none** | **none** | **none** | **none** |
+| Deadlines *(Procedural Intelligence)* | full | full | edit | view | own |
+| Procedure tab on a case *(Procedural Intelligence)* | full | full | edit | view | own |
+| Check Official Portal *(Procedural Intelligence)* | full | full | edit | edit | **none** |
+| Procedure Rules *(Procedural Intelligence)* | full | view | **none** | **none** | **none** |
 
 In plain terms:
 

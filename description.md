@@ -593,6 +593,44 @@ Open the portal on a phone (or narrow a desktop browser window below about 768px
 
 ---
 
+### 3.8 Procedural Intelligence
+
+**Status: implemented in code, not yet applied to the production database.** Everything below describes what the code does; `db/migration_procedural_intelligence.sql` and `db/seed_procedure_rules.sql` must be applied by a privileged database account before any of it is live (see [§10](#10-database)). Until then the running app behaves exactly as before — every change in this feature is additive, and no existing table, column, or `stage` value is touched.
+
+**What it answers, for any case:** Current Status → Latest Event → Required Next Procedure → Responsible User → Deadline → Reminder/Notification → Completion. The Cases module already tracked a coarse `stage`; this feature adds a real append-only event log (`case_procedures`), a rule-driven deadline engine (`procedures.py`), and a catalogue of the rules themselves (`procedure_rules`) — so the app can say not just "this case is at judgment" but "the last thing that happened was the judgment, issued on this date, and the appeal window closes on this date, because of this statute."
+
+**The one rule that governs everything else: never present a guess as fact.**
+- Every legal rule (`procedure_rules`) ships **disabled**, carrying its legal citation and a `source_tier` (`official_verified` / `official_inferred` / `firm_entered` / `ai_suggested` / `unverified`). A rule computes nothing until a named lawyer explicitly enables it — a deliberate, audit-logged, two-gate action (Admin, or an owner-Lawyer; see `backend/app/routers/rules.py`).
+- Research done for this feature (Sept 2026) found the Cassation appeal deadline cited as **both 30 and 60 days** by two different professional guides. Rather than picking one, both candidate rules are seeded, both disabled, both flagged as conflicting — a lawyer must check the primary statute text before either is ever used.
+- A deadline computed from a rule that isn't `official_verified` + lawyer-verified is `confidence = 'provisional'`: visibly badged "Suggested — needs lawyer confirmation" everywhere it appears, excluded from hard escalation, and cannot close a procedural step on its own.
+- If no enabled rule matches a case's latest event, the UI says so plainly and offers manual entry — it never invents a date.
+
+**No automated government sync exists, on purpose.** Every official Kuwait channel checked (MOJ e-Services, Sahel, Sahel Business, the MOJ site) is either login+CAPTCHA gated or requires the caller's own personal sign-in, and none publish an API. This app never stores a government credential and never solves a CAPTCHA. Instead, **Assisted Manual Sync** (the "Check official portal" panel on the Official Search Engine page): the app shows the exact lookup details and a deep link to the real portal; a human opens it, signs in as themselves, looks, and comes back to record what they saw (`POST /api/official-sync/case/{id}/check`). That observation can optionally become a real, `official_verified` procedural event in one step.
+
+**Where it shows up:**
+- **Case Details modal → "Procedural Intelligence"** section: the latest recorded event, any next-action candidates (with their due date, confidence badge, and legal citation), a "Record Procedure" button, and the full event history.
+- **Official Search Engine** page: a disclaimer that the five search tabs show the firm's own records, not live government data (unchanged behaviour — just now stated explicitly), plus the "Check official portal" panel described above.
+- **Deadlines** (new sidebar entry): a firm-wide, permission-scoped list of every deadline, filterable by status, with Confirm/Waive actions.
+- **Dashboard**, third stats row: deadlines due this week, overdue deadlines, deadlines awaiting a lawyer's confirmation, and cases not checked against an official source recently.
+- **Procedure Rules** (new sidebar entry, Admin/Lawyer only): the rule catalogue itself, where a rule is enabled or disabled.
+
+**Permissions** (four new modules, same `none/view/own/limited/edit/full` matrix every other module uses):
+
+| Module | Admin | Lawyer | consultant | delegate | User (Client) |
+|---|---|---|---|---|---|
+| `procedures` | full | full | edit | view | own (read-only) |
+| `deadlines` | full | full | edit | view | own (read-only) |
+| `official_sync` | full | full | edit | edit | none |
+| `rules_admin` | full | view | none | none | none |
+
+A Client (`own`) only ever sees `confidence = 'confirmed'` deadlines and events on their own cases — never a provisional/suggested item, and never the rule catalogue or sync internals. Enabling a rule additionally requires the caller to be Admin, or a Lawyer who is a firm owner (`is_owner`), on top of holding `rules_admin: full` — a non-owner Lawyer is refused even if granted `full`.
+
+**Scheduling.** This feature adds `POST /api/internal/run-escalations`, protected by a shared-secret header (`ASLG_INTERNAL_TASK_TOKEN`, see [§9](#9-configuration-reference-env)) rather than a login, since nothing calls it from a browser session. It runs the existing notification engine plus the deadline sync/staleness sweep, firm-wide. Everything it does is idempotent, so it is safe to call on a schedule — see [§12](#12-production-deployment-iis) for wiring it to a Windows Scheduled Task, which finally gives this app a real periodic tick (previously every proactive check only ran opportunistically, when someone happened to load a page).
+
+**Files, for developers:** `backend/app/procedures.py` (the engine), `backend/app/routers/{procedures,deadlines,official_sync,rules,internal}.py`, `backend/backfill_procedures.py` (one-time projection of existing `case_timeline`/`court_sessions`/`experts`/`execution_files` rows into the new event log — dry-run by default, `--apply` to write, generates **no** deadlines retroactively), `db/migration_procedural_intelligence.sql` + `db/rollback_procedural_intelligence.sql`, `db/seed_procedure_rules.sql`, `backend/tests/` (the project's first test suite — `pytest`, run from `backend/` with `backend/requirements-dev.txt` installed).
+
+---
+
 ## 4. Step-by-Step Testing Guide
 
 This section is a hands-on checklist. Follow it top to bottom and you'll have exercised every major feature.
@@ -762,6 +800,11 @@ This step proves the security isn't just "hiding buttons" — the server itself 
 | Uploaded documents (real files) | `backend/uploads/` |
 | Backend runtime logs (production only) | `backend/logs/` |
 | IIS site configuration | `web.config` (project root) |
+| Procedural Intelligence engine (deadline/next-action computation) | `backend/app/procedures.py` |
+| Procedural Intelligence API routers | `backend/app/routers/{procedures,deadlines,official_sync,rules,internal}.py` |
+| Procedural Intelligence DB migration (drafted, not yet applied) + rollback + rule-catalogue seed | `db/migration_procedural_intelligence.sql`, `db/rollback_procedural_intelligence.sql`, `db/seed_procedure_rules.sql` |
+| One-time backfill of pre-existing case history into the new event log | `backend/backfill_procedures.py` |
+| Backend test suite (`pytest`) | `backend/tests/` |
 
 Fonts and icons are loaded from a shared folder used by every site on this server (`C:\inetpub\sites\_shared`) rather than the internet, so the portal works even without an internet connection.
 
@@ -787,7 +830,7 @@ The remaining sections ([§7](#7-architecture--requirements) onward) cover how t
 - MySQL 8.4 (or compatible 8.x), running as a local service, reachable at `127.0.0.1:3306` by default.
 - The estate-wide shared assets folder `C:\inetpub\sites\_shared` (fonts, icons) — already present on this server.
 
-There is no separate frontend build step (no npm/webpack/bundler) and no test suite currently included in the project — "build" for this app means "install the Python dependencies," and "test" means the manual walkthrough in [§4](#4-step-by-step-testing-guide) plus the automated checks described in [§14](#14-verification-checklist).
+There is no separate frontend build step (no npm/webpack/bundler) — "build" for the frontend still means nothing beyond "the files are static." The backend has an automated test suite (`backend/tests/`, `pytest`, introduced alongside Procedural Intelligence — see [§3.8](#38-procedural-intelligence) and [§10](#10-database)) covering the notification engine, permission scoping, and the deadline-computation engine, run entirely against a throwaway in-memory database. "Test" for the rest of the app still means the manual walkthrough in [§4](#4-step-by-step-testing-guide) plus the automated checks described in [§14](#14-verification-checklist).
 
 **No virtual environment.** This project deliberately runs directly against the machine's own Python install rather than a project-local venv — one less thing to create, activate, or keep in sync between local dev and IIS. The trade-off, stated plainly: any other Python project on this same machine shares the same package versions as this one, so a future `pip install --upgrade` for a different project could change what this app sees too. On this server that risk is accepted deliberately; on a machine running several unrelated Python services, a dedicated environment (venv or otherwise) would be the safer default. See [§12.3](#123-install-dependencies) for the one thing this requires getting right (installing without `--user`).
 
@@ -840,6 +883,7 @@ All backend configuration lives in `backend\.env` (never committed — see `.git
 | `SHARED_ASSETS_DIR` | Estate-wide fonts/icons folder | `C:\inetpub\sites\_shared` | `C:\inetpub\sites\_shared` |
 | `FRONTEND_DIR` | Project root, for serving `index.html`/`css/`/`js/` | `../` (relative, since dev launches Uvicorn from `backend/`) | **absolute path**: `C:\inetpub\sites\Platforms\ASLG` |
 | `CORS_ALLOWED_ORIGINS` | Comma-separated list of origins allowed to call the API from browser JS | default already covers both dev and prod | default already covers both dev and prod |
+| `ASLG_INTERNAL_TASK_TOKEN` | Shared secret for `POST /api/internal/run-escalations` (Procedural Intelligence's scheduler hook — see [§3.8](#38-procedural-intelligence) and [§12.10](#1210-procedural-intelligence-scheduled-task)). Generate with `python -c "import secrets; print(secrets.token_urlsafe(48))"` | any long random string, or leave unset to disable the endpoint | **set** on this server as of 16 Sep 2026 — a 64-character `token_urlsafe(48)` value, known only to the Scheduled Task that calls it |
 
 **Why production needs absolute paths and dev doesn't:** `UPLOAD_DIR` and `FRONTEND_DIR` are resolved against the process's *current working directory* at startup. The documented dev workflow (`cd backend && uvicorn ...`) makes that `backend\`, so the relative defaults resolve correctly. IIS's `httpPlatformHandler`, however, starts the process with its working directory set to the folder containing `web.config` — the project root, one level up — so a relative `./uploads` or `../` would resolve to the wrong place in production. This isn't hypothetical: it was found and fixed during the September 2026 production-readiness pass (see [§17](#17-security-notes)). The production `backend\.env` on this server already uses the correct absolute paths.
 
@@ -850,7 +894,14 @@ All backend configuration lives in `backend\.env` (never committed — see `.git
 - **Engine:** MySQL 8.4, running as a local Windows service.
 - **Database name:** `aslg_legal`. **App user:** `aslg_app` (least-privilege — only needs access to this one database, not full MySQL admin).
 - **Schema:** `db/schema.sql` — table structure only, no data. This is the source of truth for the table layout; there is no separate migration tool in this project, so schema changes are applied by hand (or by re-running the relevant `CREATE`/`ALTER` statements) and then mirrored into `db/schema.sql`.
-- **Starting data:** `backend/seed.py` — creates the roles, permission matrix, the 9 demo staff/client accounts (see [§5](#5-quick-reference-default-test-accounts)), and sample cases/documents. Intended to run once against an empty database; re-running it against an already-seeded database is not guaranteed to be safe (it doesn't check for existing rows before inserting) — don't run it against production data.
+- **Starting data:** `backend/seed.py` — creates the roles, permission matrix, the 9 demo staff/client accounts (see [§5](#5-quick-reference-default-test-accounts)), and sample cases/documents. Intended to run once against an empty database; it exits immediately (no-op) if the `users` table already has any rows, so it is safe to invoke against an already-seeded database — it just won't do anything.
+- **Procedural Intelligence migration (drafted, not yet applied):** `db/migration_procedural_intelligence.sql` adds the tables/columns described in [§3.8](#38-procedural-intelligence), entirely additively — no existing column is dropped or renamed, and `cases.stage` keeps its exact current meaning. Like `db/migration_user_case_links.sql` before it, this file is **never executed by the application or by an AI assistant** — it is a draft for a human with a privileged MySQL account to review and apply by hand, e.g.:
+  ```
+  mysql -h 127.0.0.1 -P 3306 -u root -p aslg_legal < db\migration_procedural_intelligence.sql
+  mysql -h 127.0.0.1 -P 3306 -u root -p aslg_legal < db\seed_procedure_rules.sql
+  ```
+  `db/rollback_procedural_intelligence.sql` reverses it, dropping only what the migration added. After applying, mirror the new `CREATE TABLE`/`ALTER TABLE` statements into `db/schema.sql` (per this project's usual convention) and recycle the app pool. Then, optionally, backfill history for cases that predate the feature: `cd backend && python backfill_procedures.py` (dry run; add `--apply` to actually write). None of this is required for the app to keep working exactly as it does today — every new route 404s harmlessly until the migration is applied, and the app never attempts to write to a table that doesn't exist yet.
+- **Backend test suite:** `backend/tests/` (`pytest`, first introduced alongside Procedural Intelligence). Runs entirely against a throwaway in-memory SQLite database — never against `aslg_legal` — via `backend/tests/conftest.py`'s fixtures. To run: `cd backend && pip install -r requirements-dev.txt && pytest -q`.
 - **Connecting directly** (for inspection/admin — requires the MySQL client tools, e.g. `C:\Program Files\MySQL\MySQL Server 8.4\bin\mysql.exe`):
   ```
   mysql -h 127.0.0.1 -P 3306 -u aslg_app -p aslg_legal
@@ -962,6 +1013,20 @@ After changing `web.config`, `.env`, or the installed packages, recycle the app 
 ### 12.9 Verify
 See [§14](#14-verification-checklist) for the full checklist. At minimum: `http://app.alsaiflegalgroup.com/api/health` should return `{"status":"ok"}`, and `http://app.alsaiflegalgroup.com/` should show the login page.
 
+### 12.10 Procedural Intelligence Scheduled Task
+
+**Only relevant once `db/migration_procedural_intelligence.sql` has been applied (see [§10](#10-database)) — until then, skip this.** This app has no in-process scheduler (an APScheduler-style in-memory job would silently vanish every time IIS's `httpPlatformHandler` recycles the worker process), so periodic work — the notification engine's 7/3/1 pre-due alerts, and Procedural Intelligence's deadline sync/staleness sweep — has always run only opportunistically, whenever someone happened to load a page that triggers it. `POST /api/internal/run-escalations` (protected by the `ASLG_INTERNAL_TASK_TOKEN` header, see [§9](#9-configuration-reference-env)) exists so a real periodic tick can be added without an in-process scheduler:
+
+1. Generate and set `ASLG_INTERNAL_TASK_TOKEN` in the production `backend\.env`, then recycle the app pool ([§12.8](#128-restart--recycle)).
+2. Create a Windows Scheduled Task that runs every 15 minutes, calling:
+   ```powershell
+   Invoke-RestMethod -Method Post -Uri "http://127.0.0.1/api/internal/run-escalations" -Headers @{ "X-Internal-Task-Token" = "<the same value as ASLG_INTERNAL_TASK_TOKEN>" }
+   ```
+   (`schtasks /create /tn "ASLG Escalations" /tr "powershell -File C:\path\to\run-escalations.ps1" /sc minute /mo 15 /ru SYSTEM`, with the `Invoke-RestMethod` line above saved as that `.ps1` file.)
+3. This is additive to, not a replacement for, the existing opportunistic calls from the dashboard/reminders/notifications pages — both paths call the same idempotent functions, so running both is redundant-safe, never double-fires a notification.
+
+Leaving `ASLG_INTERNAL_TASK_TOKEN` unset (the default) simply leaves the endpoint refusing every request — the app behaves exactly as it did before this feature existed.
+
 ---
 
 ## 13. IIS Configuration Reference
@@ -1063,6 +1128,8 @@ Findings and fixes from the September 2026 production-readiness pass, kept here 
 - **Verified clean:** no hardcoded secrets, passwords, or API keys anywhere in source (`grep`-checked); `DEBUG`/reload flags are not enabled in the production launch command; no `localhost`/`127.0.0.1` values appear anywhere they'd break production (the two occurrences that exist — `DB_HOST` default and one entry in the CORS allowlist — are both correct on purpose, since MySQL and the API are same-box/same-origin respectively); passwords are bcrypt-hashed everywhere, never stored or logged in plaintext; the 9 seeded accounts share one starting password that lives only in `backend/seed.py` and is not reproduced in any documentation (see [§5](#5-quick-reference-default-test-accounts)) — if this ever needs to serve real, non-demo users, treat those 9 accounts as needing a password reset first.
 - **Recommendation, not yet done (low priority):** `/_shared` is currently proxied through the Python process like everything else. A sibling project on this server (`hrms`) instead serves its equivalent shared-assets path directly via IIS's own static handler, so icons/fonts stay up even if the Python process or its database connection is down. This would require adding an IIS virtual directory for `_shared` pointed at `C:\inetpub\sites\_shared`, which wasn't done in this pass to avoid unnecessary IIS-level changes beyond what correctness required — worth doing if resilience against backend outages becomes a priority.
 - **Fixed — passwordless login endpoint removed for production.** `POST /api/auth/quick-login` (and the public, unauthenticated `GET /api/auth/users` roster that fed it) let anyone log in as *any* account by user ID alone, no password — a deliberate test-environment convenience (the login page's former "Quick Role Switch" grid) that had no place in a production deployment: leaving it live would have meant zero-credential admin access for anyone who found the endpoint. **Removed entirely** — both endpoints, the `QuickLoginRequest` schema, and the login page's quick-switch grid and admin-credential hint box. Verified: both routes now return 404. Real username/password login (`POST /api/auth/login`, bcrypt-verified) is unaffected and is now the only way in — see [§5](#5-quick-reference-default-test-accounts) for working credentials.
+- **By design — Procedural Intelligence never automates access to a government portal.** Every official Kuwait channel researched (MOJ e-Services, Sahel, Sahel Business, the MOJ site) is either login+CAPTCHA gated or requires the caller's own personal sign-in; none publish an API. This app therefore never stores a government credential, never solves or bypasses a CAPTCHA, and never scrapes an authenticated government endpoint — see [§3.8](#38-procedural-intelligence). The only "sync" is a human opening the real portal themselves and recording what they saw.
+- **By design — a legal deadline is never presented as fact without a named lawyer's sign-off.** Every `procedure_rules` row ships disabled with a source tier that is at best `official_inferred` at seed time; enabling one (asserting it as a fact the firm relies on) is restricted to Admin or an owner-Lawyer, requires an explicit `confirm: true`, and is refused outright if the rule's `source_tier` is still `unverified` — see `backend/app/routers/rules.py`. This is why the Cassation-appeal rule ships as two competing, both-disabled candidates (30 vs 60 days) rather than a guessed single value.
 
 ---
 

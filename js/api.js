@@ -157,6 +157,29 @@ export async function exportActivityLogCsv() {
   return res.blob();
 }
 
+// ---------------- Procedural Intelligence ----------------
+// Current Status -> Latest Event -> Required Next Procedure ->
+// Responsible User -> Deadline -> Reminder/Notification -> Completion
+export const listProcedureTypes = () => request("/procedures/types");
+export const listCaseTypes = () => request("/procedures/case-types");
+export const listCaseProcedures = (caseId) => request(`/procedures/${caseId}`);
+export const previewNextActions = (caseId) => request(`/procedures/${caseId}/next-actions`);
+export const recordProcedure = (caseId, payload) => request(`/procedures/${caseId}`, { method: "POST", body: payload });
+
+export const listDeadlines = (params = {}) => request(`/deadlines${qs(params)}`);
+export const syncDeadlines = () => request("/deadlines/sync", { method: "POST" });
+export const confirmDeadline = (id, dueAt = null) => request(`/deadlines/${id}/confirm`, { method: "PUT", body: { due_at: dueAt } });
+export const waiveDeadline = (id, reason) => request(`/deadlines/${id}/waive`, { method: "PUT", body: { reason } });
+
+export const listOfficialSources = () => request("/official-sync/sources");
+export const listOfficialChecks = (caseId) => request(`/official-sync/case/${caseId}/checks`);
+export const recordOfficialCheck = (caseId, payload) => request(`/official-sync/case/${caseId}/check`, { method: "POST", body: payload });
+export const listStaleOfficialSync = () => request("/official-sync/stale");
+
+export const listProcedureRules = () => request("/rules");
+export const verifyProcedureRule = (id, confirm, notes = null) => request(`/rules/${id}/verify`, { method: "POST", body: { confirm, notes } });
+export const disableProcedureRule = (id) => request(`/rules/${id}/disable`, { method: "POST" });
+
 // ---------------- System maintenance (Admin only — also enforced server-side) ----------------
 export const resetDatabase = (confirmPhrase) => request("/admin/reset-database", { method: "POST", body: { confirm_phrase: confirmPhrase } });
 export async function downloadBackup() {

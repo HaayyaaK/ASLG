@@ -7,7 +7,23 @@ from fastapi.staticfiles import StaticFiles
 
 from .client_ip import ClientIPMiddleware
 from .config import settings
-from .routers import activity_log, admin, auth, cases, dashboard, documents, notifications, reminders, search, users
+from .routers import (
+    activity_log,
+    admin,
+    auth,
+    cases,
+    dashboard,
+    deadlines,
+    documents,
+    internal,
+    notifications,
+    official_sync,
+    procedures,
+    reminders,
+    rules,
+    search,
+    users,
+)
 
 app = FastAPI(title="ASLG Legal Portal API", version="1.0.0")
 
@@ -34,6 +50,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Extensions served straight off disk that an operator edits in place on the
+# live site. Kept as a tuple rather than inlined so the list is one obvious
+# thing to extend when a new asset type is added.
+_NO_STORE_SUFFIXES = (
+    ".css", ".js",
+    ".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif", ".svg", ".ico",
+    ".html",
+)
+
+
 @app.middleware("http")
 async def no_cache_for_app_assets(request, call_next):
     """FastAPI's StaticFiles sends only ETag/Last-Modified, no explicit
@@ -41,12 +67,38 @@ async def no_cache_for_app_assets(request, call_next):
     serve a stale copy on a plain reload without ever revalidating, so an
     edited stylesheet/script can silently keep rendering old behavior.
     That's actively dangerous during local development: a real fix can
-    look like it "didn't work." Shared, rarely-changing assets under
-    /_shared (fonts, icons) are left alone — no correctness risk there,
-    and they benefit from caching."""
+    look like it "didn't work."
+
+    The same applies to /assets images and to the index.html shell, and
+    more sharply, because this deployment IS the live site: images are
+    replaced in place (background.jpg has been swapped twice) and there is
+    no build step or content hash to change the URL. Without an explicit
+    header both the browser AND Cloudflare in front of it fall back to
+    *heuristic* freshness — typically a fraction of the time since
+    Last-Modified — which is the worst of both worlds: uncontrolled, and
+    unpredictable per client. `no-store` makes a file edit visible on the
+    next request, everywhere, with no purge step. index.html is included
+    for the same reason: a stale shell keeps serving the old <script> and
+    <link rel=preload> tags however fresh the files they point at are.
+
+    This deliberately trades bandwidth for immediacy. The photograph is
+    ~335 KB and is refetched per login page view; at this firm's traffic
+    that is not a meaningful cost, and correctness of what the operator
+    sees after an edit is worth more.
+
+    Shared, rarely-changing assets under /_shared (fonts, icons) are left
+    alone — they are not edited in place here, and they benefit from
+    caching. Note `request.url.path` is the decoded path without the query
+    string, so a `?v=` cache-buster cannot accidentally defeat the match."""
     response = await call_next(request)
     path = request.url.path
-    if (path.endswith(".css") or path.endswith(".js")) and not path.startswith("/_shared/"):
+    if path.startswith("/_shared/"):
+        return response
+    # "/" resolves to the index.html shell via StaticFiles(html=True). Routing
+    # inside the SPA is hash-based, so that is the only extensionless HTML
+    # entry point — no need for a broader "any trailing slash" rule, which
+    # would also sweep in API paths.
+    if path == "/" or path.endswith(_NO_STORE_SUFFIXES):
         response.headers["Cache-Control"] = "no-store"
     return response
 
@@ -61,6 +113,11 @@ app.include_router(reminders.router)
 app.include_router(dashboard.router)
 app.include_router(activity_log.router)
 app.include_router(admin.router)
+app.include_router(procedures.router)
+app.include_router(deadlines.router)
+app.include_router(official_sync.router)
+app.include_router(rules.router)
+app.include_router(internal.router)
 
 
 @app.get("/api/health")

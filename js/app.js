@@ -11,6 +11,8 @@ import * as notificationsPage from "./pages/notifications.js";
 import * as remindersPage from "./pages/reminders.js";
 import * as usersPage from "./pages/users.js";
 import * as activityLogPage from "./pages/activity-log.js";
+import * as deadlinesPage from "./pages/deadlines.js";
+import * as adminRulesPage from "./pages/admin-rules.js";
 
 const ROUTES = [
   { path: "dashboard", perm: "dashboard", icon: "house", label: "nav_dashboard", shortLabel: "nav_dashboard_short", page: dashboardPage },
@@ -18,6 +20,7 @@ const ROUTES = [
   { path: "cases", perm: "cases", icon: "folder-open", label: "nav_cases", shortLabel: "nav_cases", page: casesPage },
   { path: "documents", perm: "documents", icon: "file-lines", label: "nav_documents", shortLabel: "nav_documents_short", page: documentsPage },
   { path: "reminders", perm: "reminders", icon: "clock-rotate-left", label: "nav_reminders", shortLabel: "nav_reminders_short", page: remindersPage },
+  { path: "deadlines", perm: "deadlines", icon: "hourglass-half", label: "nav_deadlines", shortLabel: "nav_deadlines_short", page: deadlinesPage },
   { path: "notifications", perm: "notifications", icon: "bell", label: "nav_notifications", shortLabel: "nav_notifications_short", page: notificationsPage },
   { path: "users", perm: "users", icon: "user-gear", label: "nav_users", shortLabel: "nav_users_short", page: usersPage },
   // Reuses the "users" permission key on purpose: only the Admin role has
@@ -28,6 +31,7 @@ const ROUTES = [
   // role — see backend/app/routers/activity_log.py), so this only ever
   // controls whether the nav entry/page render, never actual access.
   { path: "activity-log", perm: "users", icon: "clipboard-list", label: "nav_activity_log", shortLabel: "nav_activity_log_short", page: activityLogPage },
+  { path: "rules-admin", perm: "rules_admin", icon: "gavel", label: "nav_rules_admin", shortLabel: "nav_rules_admin_short", page: adminRulesPage },
 ];
 
 const MAX_PRIMARY_TABS = 4;

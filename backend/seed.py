@@ -26,14 +26,20 @@ from app.database import SessionLocal  # noqa: E402
 from app.models import (  # noqa: E402
     Case,
     CaseNote,
+    CaseStatus,
     CaseTimeline,
+    CaseType,
     Court,
     CourtSession,
+    DocClass,
     Document,
     ExecutionFile,
     Expert,
     Module,
     Notification,
+    OfficialSource,
+    ProcedureRule,
+    ProcedureType,
     Role,
     RolePermission,
     User,
@@ -75,14 +81,21 @@ ROLES = [
     ("User", "عميل", "Client"),
 ]
 
-MODULES = ["dashboard", "search", "cases", "documents", "notifications", "users", "reminders"]
+MODULES = [
+    "dashboard", "search", "cases", "documents", "notifications", "users", "reminders",
+    # Procedural Intelligence — see db/migration_procedural_intelligence.sql
+    # section 5, which this list and PERMISSIONS below deliberately mirror
+    # so a fresh dev/test install and a manually-migrated production
+    # database end up with the identical access matrix.
+    "procedures", "deadlines", "official_sync", "rules_admin",
+]
 
 PERMISSIONS = {
-    "Admin": {"dashboard": "full", "search": "full", "cases": "full", "documents": "full", "notifications": "full", "users": "full", "reminders": "full"},
-    "Lawyer": {"dashboard": "full", "search": "full", "cases": "full", "documents": "full", "notifications": "full", "users": "none", "reminders": "full"},
-    "consultant": {"dashboard": "full", "search": "edit", "cases": "limited", "documents": "edit", "notifications": "full", "users": "none", "reminders": "edit"},
-    "delegate": {"dashboard": "full", "search": "edit", "cases": "view", "documents": "edit", "notifications": "full", "users": "none", "reminders": "view"},
-    "User": {"dashboard": "limited", "search": "none", "cases": "own", "documents": "own", "notifications": "full", "users": "none", "reminders": "none"},
+    "Admin": {"dashboard": "full", "search": "full", "cases": "full", "documents": "full", "notifications": "full", "users": "full", "reminders": "full", "procedures": "full", "deadlines": "full", "official_sync": "full", "rules_admin": "full"},
+    "Lawyer": {"dashboard": "full", "search": "full", "cases": "full", "documents": "full", "notifications": "full", "users": "none", "reminders": "full", "procedures": "full", "deadlines": "full", "official_sync": "full", "rules_admin": "view"},
+    "consultant": {"dashboard": "full", "search": "edit", "cases": "limited", "documents": "edit", "notifications": "full", "users": "none", "reminders": "edit", "procedures": "edit", "deadlines": "edit", "official_sync": "edit", "rules_admin": "none"},
+    "delegate": {"dashboard": "full", "search": "edit", "cases": "view", "documents": "edit", "notifications": "full", "users": "none", "reminders": "view", "procedures": "view", "deadlines": "view", "official_sync": "edit", "rules_admin": "none"},
+    "User": {"dashboard": "limited", "search": "none", "cases": "own", "documents": "own", "notifications": "full", "users": "none", "reminders": "none", "procedures": "own", "deadlines": "own", "official_sync": "none", "rules_admin": "none"},
 }
 
 COURTS = [
@@ -93,6 +106,165 @@ COURTS = [
     ("family", "محكمة الأسرة", "Family Court"),
     ("execution", "دائرة التنفيذ", "Execution Circuit"),
 ]
+
+# ---------------------------------------------------------------------
+# Procedural Intelligence taxonomy + rule catalogue (Phase 1 blueprint
+# section 2.3/4.2). Mirrored, row-for-row, in db/seed_procedure_rules.sql
+# for production (that file is what actually gets applied there — this
+# block only runs against a fresh dev/test database; see
+# seed_procedural_intelligence() below and its call site in run_seed()).
+#
+# CASE_TYPES: named directly after the specialised court divisions the
+# Sept 2026 research confirmed exist (Commercial/Labour/Family/
+# Administrative courts, etc — Phase 1 blueprint section 2.2), so
+# source_tier='official_inferred' — inferred from officially-described
+# court structure, NOT itself an official case-type code list (the real
+# MOJ code list was explicitly "not determined", section 2.4).
+# ---------------------------------------------------------------------
+CASE_TYPES = [
+    ("civil", "مدني", "Civil"),
+    ("commercial", "تجاري", "Commercial"),
+    ("labour", "عمالي", "Labour"),
+    ("administrative", "إداري", "Administrative"),
+    ("rental", "إيجارات", "Rental"),
+    ("family", "أسرة", "Family"),
+    ("criminal", "جزائي", "Criminal"),
+    ("misdemeanor", "جنح", "Misdemeanor"),
+    ("urgent_matters", "أمور مستعجلة", "Urgent Matters"),
+    ("payment_order", "أمر أداء", "Payment Order"),
+    ("precautionary_order", "أمر على عريضة", "Precautionary Order"),
+    ("execution", "تنفيذ", "Execution"),
+]
+
+# PROCEDURE_TYPES: the firm's own workflow vocabulary, not a legal
+# assertion (no source_tier — see models.py's ProcedureType docstring).
+PROCEDURE_TYPES = [
+    ("case_filed", "تسجيل الدعوى", "Case Filed", False),
+    ("case_served", "تبليغ الخصم", "Defendant Served", False),
+    ("defense_submitted", "تقديم مذكرة الدفاع", "Defense Memo Submitted", False),
+    ("hearing_scheduled", "تحديد جلسة", "Hearing Scheduled", False),
+    ("hearing_held", "انعقاد الجلسة", "Hearing Held", False),
+    ("hearing_postponed", "تأجيل الجلسة", "Hearing Postponed", False),
+    ("expert_appointed", "تعيين خبير", "Expert Appointed", False),
+    ("expert_report_filed", "تقديم تقرير الخبير", "Expert Report Filed", False),
+    ("judgment_issued", "صدور الحكم", "Judgment Issued", False),
+    ("judgment_served", "تبليغ الحكم", "Judgment Served", False),
+    ("appeal_filed", "تقديم استئناف", "Appeal Filed", False),
+    ("appeal_judgment_issued", "صدور حكم الاستئناف", "Appeal Judgment Issued", False),
+    ("cassation_filed", "تقديم طعن بالتمييز", "Cassation Appeal Filed", False),
+    ("objection_filed", "تقديم معارضة", "Objection Filed (in absentia)", False),
+    ("grievance_filed", "تقديم تظلم", "Grievance Filed", False),
+    ("payment_order_issued", "صدور أمر أداء", "Payment Order Issued", False),
+    ("execution_opened", "فتح ملف تنفيذ", "Execution File Opened", False),
+    ("seizure_ordered", "أمر بالحجز", "Seizure Ordered", False),
+    ("execution_closed", "إغلاق ملف التنفيذ", "Execution File Closed", True),
+    ("case_closed", "إغلاق الدعوى", "Case Closed", True),
+    # Fallback target for backfill_procedures.py: a pre-existing case_timeline
+    # step whose free-text title doesn't match any canonical type above
+    # (real-world entries won't all use these exact phrasings) is recorded
+    # under this generic type rather than guessed into a specific one it may
+    # not actually be.
+    ("migrated_step", "خطوة مؤرشفة من السجل السابق", "Historical Step (migrated)", False),
+]
+
+# CASE_STATUSES: firm-operational refinements of the existing `stage` enum
+# (source_tier is implicitly 'firm_entered' — these are workflow labels the
+# firm defines for itself, not a claim about Kuwaiti law).
+CASE_STATUSES = [
+    ("case_registered", "تسجيل الدعوى", "Case Registered", "new"),
+    ("awaiting_service", "بانتظار التبليغ", "Awaiting Service", "prep"),
+    ("defense_pending", "بانتظار مذكرة الدفاع", "Defense Memo Pending", "prep"),
+    ("hearing_pending", "بانتظار الجلسة", "Hearing Pending", "pleading"),
+    ("expert_assigned", "خبير معيّن", "Expert Assigned", "pleading"),
+    ("judgment_pending", "بانتظار الحكم", "Judgment Pending", "judgment"),
+    ("judgment_issued_status", "صدر الحكم", "Judgment Issued", "judgment"),
+    ("execution_open", "ملف تنفيذ مفتوح", "Execution File Open", "execution"),
+    ("case_closed_status", "مغلقة", "Closed", "closed"),
+]
+
+DOC_CLASSES = [
+    ("pleading", "مذكرة", "Pleading"),
+    ("power_of_attorney", "وكالة", "Power of Attorney"),
+    ("judgment", "حكم", "Judgment"),
+    ("expert_report", "تقرير خبير", "Expert Report"),
+    ("execution_notice", "إشعار تنفيذ", "Execution Notice"),
+    ("correspondence", "مراسلات", "Correspondence"),
+    ("identity_document", "وثيقة هوية", "Identity Document"),
+    ("other", "أخرى", "Other"),
+]
+
+# OFFICIAL_SOURCES: (code, name_ar, name_en, base_url, access_mode,
+# requires_captcha, terms_url). access_mode/requires_captcha are the
+# recorded REASON no automated sync exists — see Phase 1 blueprint 2.1 and
+# procedures.py's module docstring.
+OFFICIAL_SOURCES = [
+    ("moj_eservices", "الخدمات الإلكترونية لوزارة العدل", "MOJ e-Services",
+     "https://eservices.moj.gov.kw", "manual_authenticated", True, "https://eservices.moj.gov.kw"),
+    ("sahel", "سهل", "Sahel", "https://sahel.gov.kw", "manual_authenticated", False, None),
+    ("sahel_business", "سهل للأعمال", "Sahel Business",
+     "https://sahel.gov.kw", "manual_authenticated", False, None),
+    ("moj_site", "موقع وزارة العدل", "MOJ Website", "https://www.moj.gov.kw", "none", False, None),
+]
+
+# PROCEDURE_RULES: the brain, as data. Every row ships is_enabled=False.
+# Column order: code, version, trigger_code, expected_code, deadline_days,
+# day_basis, counts_from, source_tier, legal_citation, source_url, notes.
+# See Phase 1 blueprint section 2.3 for the source tiers and, in
+# particular, why the Cassation deadline is TWO competing disabled
+# candidates rather than one guessed value.
+_CASSATION_CONFLICT_NOTE = (
+    "CONFLICTS with the other cassation_appeal_* candidate rule — Chambers' "
+    "Litigation 2026 guide cites Art. 153 of Decree-Law 38/1980 for 60 days; "
+    "DLA Piper's Global Litigation Guide states 30 days for the same "
+    "transition. Verify against the primary statute text before enabling "
+    "either variant; do not enable both."
+)
+PROCEDURE_RULES = [
+    dict(
+        code="appeal_first_instance_to_appeal", version=1,
+        trigger="judgment_issued", expected="appeal_filed", deadline_days=30,
+        day_basis="calendar", counts_from="judgment_date", source_tier="official_inferred",
+        legal_citation="Decree-Law No. 38/1980",
+        source_url="https://www.dlapiperintelligence.com/litigation/insight/index.html?t=01-overview-of-court-system&c=KW",
+        notes="Consistent across two independent professional guides (DLA Piper, Chambers) as of Sept 2026, "
+              "but neither is the primary statute text -- verify Art. references before enabling.",
+    ),
+    dict(
+        code="cassation_appeal_60d", version=1,
+        trigger="appeal_judgment_issued", expected="cassation_filed", deadline_days=60,
+        day_basis="calendar", counts_from="judgment_date", source_tier="unverified",
+        legal_citation="Decree-Law No. 38/1980, Art. 153 (per Chambers Litigation 2026 guide)",
+        source_url="https://practiceguides.chambers.com/practice-guides/litigation-2026/kuwait",
+        notes=_CASSATION_CONFLICT_NOTE,
+    ),
+    dict(
+        code="cassation_appeal_30d", version=1,
+        trigger="appeal_judgment_issued", expected="cassation_filed", deadline_days=30,
+        day_basis="calendar", counts_from="judgment_date", source_tier="unverified",
+        legal_citation="Decree-Law No. 38/1980 (per DLA Piper Global Litigation Guide)",
+        source_url="https://www.dlapiperintelligence.com/litigation/insight/index.html?t=06-appeals&c=KW",
+        notes=_CASSATION_CONFLICT_NOTE,
+    ),
+    dict(
+        code="payment_order_grievance", version=1,
+        trigger="payment_order_issued", expected="grievance_filed", deadline_days=10,
+        day_basis="calendar", counts_from="notification", source_tier="unverified",
+        legal_citation="Secondary commercial source re: أمر أداء grievance (تظلم) -- NOT primary statute text",
+        source_url=None,
+        notes="Debtor's reasoned grievance window after notification of a payment order. Sourced from a "
+              "secondary commercial-law summary, not the primary statute -- verify before enabling.",
+    ),
+    dict(
+        code="payment_order_service_validity", version=1,
+        trigger="payment_order_issued", expected="case_served", deadline_days=180,
+        day_basis="calendar", counts_from="occurrence", source_tier="unverified",
+        legal_citation="Secondary commercial source: payment order is void if not served within 6 months",
+        source_url=None,
+        notes="Approximated as 180 days for 'six months' -- verify the statute's own definition of the "
+              "period before enabling (some Kuwaiti provisions count lunar/Hijri months).",
+    ),
+]
+
 
 USERS = [
     dict(name_en="Tamer Salem", name_ar="تامر سالم", username="tamer.salem", occupation="IT Administator", role="Admin"),
@@ -110,6 +282,57 @@ PLACEHOLDER_PDF = b"%PDF-1.4\n%ASLG demo document\n1 0 obj<<>>endobj\ntrailer<<>
 PLACEHOLDER_JPG = bytes.fromhex(
     "ffd8ffe000104a46494600010100000100010000ffdb004300030202020202030202020304040304050805050405090b0908080a0708090a0b0c0e0e0e0e0e0e0c0cffd9"
 )
+
+
+def seed_procedural_intelligence(db):
+    """Populate the Procedural Intelligence taxonomy + rule catalogue.
+
+    Idempotent on its own (checked against case_types specifically, not the
+    users-table guard `main()` uses) so it is safe even if ever called a
+    second time against a database that already has this data — though in
+    practice it only ever runs once, from inside run_seed(), on a database
+    that had zero users. Every ProcedureRule is inserted with is_enabled
+    False regardless of source_tier: enabling one is a Phase 2 runtime
+    action (routers/rules.py), never a seed-time one.
+    """
+    if db.query(CaseType).first() is not None:
+        return
+
+    case_type_rows = {}
+    for code, ar, en in CASE_TYPES:
+        row = CaseType(code=code, name_ar=ar, name_en=en, source_tier="official_inferred", is_enabled=True)
+        db.add(row)
+        case_type_rows[code] = row
+
+    procedure_type_rows = {}
+    for code, ar, en, terminal in PROCEDURE_TYPES:
+        row = ProcedureType(code=code, name_ar=ar, name_en=en, is_terminal=terminal)
+        db.add(row)
+        procedure_type_rows[code] = row
+
+    for code, ar, en, maps_to in CASE_STATUSES:
+        db.add(CaseStatus(code=code, name_ar=ar, name_en=en, maps_to_stage=maps_to))
+
+    for code, ar, en in DOC_CLASSES:
+        db.add(DocClass(code=code, name_ar=ar, name_en=en))
+
+    for code, ar, en, url, access_mode, captcha, terms in OFFICIAL_SOURCES:
+        db.add(OfficialSource(
+            code=code, name_ar=ar, name_en=en, base_url=url,
+            access_mode=access_mode, requires_captcha=captcha, terms_url=terms,
+        ))
+    db.flush()
+
+    for r in PROCEDURE_RULES:
+        db.add(ProcedureRule(
+            code=r["code"], version=r["version"],
+            trigger_procedure_type_id=procedure_type_rows[r["trigger"]].id,
+            expected_procedure_type_id=procedure_type_rows[r["expected"]].id,
+            deadline_days=r["deadline_days"], day_basis=r["day_basis"], counts_from=r["counts_from"],
+            source_tier=r["source_tier"], legal_citation=r["legal_citation"], source_url=r["source_url"],
+            notes=r["notes"], is_enabled=False,
+        ))
+    db.flush()
 
 
 def run_seed(db):
@@ -144,6 +367,8 @@ def run_seed(db):
         db.add(c)
         court_rows[level_code] = c
     db.flush()
+
+    seed_procedural_intelligence(db)
 
     # Never touch a user that already exists, and never create a second
     # Admin if one is already present — both checked against the real table,

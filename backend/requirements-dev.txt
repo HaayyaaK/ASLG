@@ -1,0 +1,5 @@
+# Development/test-only dependencies — NOT installed in production.
+# Production installs only backend/requirements.txt (see description.md
+# Section 12.3); this file exists purely so `pytest -q` works locally and
+# in CI, and so a reviewer knows why `pytest` isn't in requirements.txt.
+pytest==9.1.1

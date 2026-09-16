@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict
@@ -460,3 +460,201 @@ class AuditLogOut(BaseModel):
 
 class DatabaseResetRequest(BaseModel):
     confirm_phrase: str
+
+
+# ---------------- Procedural Intelligence ----------------
+# Current Status -> Latest Event -> Required Next Procedure ->
+# Responsible User -> Deadline -> Reminder/Notification -> Completion
+
+
+class CaseTypeOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    parent_id: int | None
+    code: str
+    name_ar: str
+    name_en: str
+    source_tier: str
+    is_enabled: bool
+
+
+class ProcedureTypeOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    code: str
+    name_ar: str
+    name_en: str
+    is_terminal: bool
+
+
+class DocClassOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    code: str
+    name_ar: str
+    name_en: str
+
+
+class ProcedureRecordRequest(BaseModel):
+    procedure_type_id: int
+    occurred_at: datetime
+    notes_ar: str | None = None
+    notes_en: str | None = None
+    official_ref: str | None = None
+    evidence_document_id: int | None = None
+    # Present only when this event is being recorded straight from an
+    # Assisted Manual Sync observation (routers/official_sync.py) rather
+    # than typed in directly — controls source/source_tier on the row.
+    observed_official: bool = False
+
+
+class CaseProcedureOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    case_id: int
+    procedure_type_id: int
+    procedure_code: str
+    procedure_name_ar: str
+    procedure_name_en: str
+    occurred_at: datetime
+    recorded_by: int
+    recorded_by_name_ar: str
+    recorded_by_name_en: str
+    source: str
+    source_tier: str
+    observed_at: datetime | None
+    observed_by: int | None
+    official_ref: str | None
+    evidence_document_id: int | None
+    notes_ar: str | None
+    notes_en: str | None
+    supersedes_id: int | None
+    created_at: datetime
+
+
+class NextActionOut(BaseModel):
+    """One candidate "what's due next" produced by procedures.next_actions() —
+    NEVER a guess dressed up as fact: `confidence` and `source_tier` below
+    tell the caller exactly how much legal weight this carries, and a case
+    with no enabled matching rule simply returns an empty list rather than
+    a fabricated entry."""
+    rule_id: int | None
+    rule_code: str | None
+    expected_procedure_type_id: int
+    expected_procedure_code: str
+    expected_procedure_name_ar: str
+    expected_procedure_name_en: str
+    due_at: datetime
+    confidence: str  # confirmed | provisional
+    source_tier: str | None
+    legal_citation: str | None
+    legal_basis_ar: str | None
+    legal_basis_en: str | None
+    responsible_user_id: int | None
+
+
+class CaseDeadlineOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    case_id: int
+    case_number: str
+    case_year: int
+    triggered_by_procedure_id: int
+    rule_id: int | None
+    rule_code: str | None = None
+    deadline_type_code: str
+    due_at: datetime
+    responsible_user_id: int | None
+    responsible_user_name_ar: str | None = None
+    responsible_user_name_en: str | None = None
+    confidence: str
+    confirmed_by: int | None
+    confirmed_at: datetime | None
+    status: str
+    legal_citation: str | None = None
+    created_at: datetime
+
+
+class DeadlineConfirmRequest(BaseModel):
+    due_at: datetime | None = None  # allows a lawyer to adjust the date while confirming
+
+
+class DeadlineWaiveRequest(BaseModel):
+    reason: str
+
+
+class ProcedureRuleOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    code: str
+    version: int
+    case_type_id: int | None
+    court_level_code: str | None
+    trigger_procedure_type_id: int
+    trigger_procedure_code: str
+    expected_procedure_type_id: int
+    expected_procedure_code: str
+    deadline_days: int
+    day_basis: str
+    counts_from: str
+    responsible_role_code: str | None
+    legal_basis_ar: str | None
+    legal_basis_en: str | None
+    legal_citation: str | None
+    source_url: str | None
+    source_tier: str
+    is_enabled: bool
+    verified_by_user_id: int | None
+    verified_by_name_ar: str | None = None
+    verified_by_name_en: str | None = None
+    verified_at: datetime | None
+    effective_from: date | None
+    effective_to: date | None
+    notes: str | None
+
+
+class ProcedureRuleVerifyRequest(BaseModel):
+    """Enabling a rule asserts a legal fact — this is the one write this
+    feature treats as consequential enough to require the caller to say so
+    explicitly, not merely hold the permission for it."""
+    confirm: bool
+    notes: str | None = None
+
+
+class OfficialSourceOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    code: str
+    name_ar: str
+    name_en: str
+    base_url: str
+    access_mode: str
+    requires_captcha: bool
+    terms_url: str | None
+    is_enabled: bool
+
+
+class OfficialSourceCheckRequest(BaseModel):
+    source_id: int
+    outcome: str  # no_change | change_recorded | not_found | blocked
+    evidence_document_id: int | None = None
+    raw_note: str | None = None
+    # Only meaningful when outcome == 'change_recorded': records the
+    # observed change as a real CaseProcedure row in the same call.
+    new_procedure: ProcedureRecordRequest | None = None
+
+
+class OfficialSourceCheckOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    case_id: int
+    source_id: int
+    source_code: str
+    checked_by: int
+    checked_by_name_ar: str
+    checked_by_name_en: str
+    checked_at: datetime
+    outcome: str
+    evidence_document_id: int | None
+    resulting_procedure_id: int | None
+    raw_note: str | None

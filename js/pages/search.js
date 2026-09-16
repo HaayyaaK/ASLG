@@ -1,5 +1,5 @@
 import { t, getLang } from "../i18n.js";
-import { searchCaseNumber, searchSessions, searchExperts, searchExecution, searchInternal, importRecord, listTracked, untrackCase } from "../api.js";
+import { searchCaseNumber, searchSessions, searchExperts, searchExecution, searchInternal, importRecord, listTracked, untrackCase, listCases, listOfficialSources, recordOfficialCheck, listProcedureTypes, getPermission } from "../api.js";
 import { formatDate, toast, escapeHtml, icon, formatNumber } from "../ui.js";
 import { openCaseDetail } from "./cases.js";
 import { previewDocument } from "./documents.js";
@@ -48,12 +48,14 @@ export async function render(container, user) {
       <div class="panel-body">
         <h2 class="mt-0">${t("search_hub_title")}</h2>
         <p class="text-muted mt-0">${t("search_hub_subtitle")}</p>
+        <p class="search-source-notice">${icon("circle-info")} ${t("search_source_notice")}</p>
         <div class="tabs" id="search-tabs">
           ${TABS.map((tb) => `<button class="tab-btn ${tb.key === activeTab ? "active" : ""}" data-tab="${tb.key}"><span class="label-full">${t(tb.label)}</span><span class="label-short">${t(tb.shortLabel)}</span></button>`).join("")}
         </div>
         <div id="search-tab-content"></div>
       </div>
     </div>
+    ${getPermission("official_sync") !== "none" ? officialSyncPanelSkeleton() : ""}
     ${usefulWebsitesPanel()}
   `;
 
@@ -73,6 +75,137 @@ export async function render(container, user) {
     internal: renderInternalTab,
   };
   renderers[activeTab](content, user);
+
+  if (getPermission("official_sync") !== "none") {
+    wireOfficialSyncPanel(container);
+  }
+}
+
+/**
+ * Assisted Manual Sync — "Check official portal" (Phase 1 blueprint
+ * section 4.5). Every result on the five tabs above is the FIRM'S OWN
+ * records, matched to look like the real MOJ e-Services search screen
+ * (see the header subtitle) — this panel is the honest bridge to the real
+ * government portal: it opens the real site in a new tab for the user to
+ * sign in and look themselves (no credential or CAPTCHA ever passes
+ * through this app), then records only what a human reports having seen.
+ */
+function officialSyncPanelSkeleton() {
+  return `
+    <div class="panel" id="official-sync-panel">
+      <div class="panel-header"><h3>${icon("arrows-rotate")} ${t("official_sync_title")}</h3></div>
+      <div class="panel-body">
+        <p class="text-muted mt-0">${t("official_sync_disclaimer")}</p>
+        <div id="official-sync-body"><p class="text-muted">${icon("spinner", "fa-spin")}</p></div>
+      </div>
+    </div>`;
+}
+
+async function wireOfficialSyncPanel(container) {
+  const body = container.querySelector("#official-sync-body");
+  if (!body) return;
+  let cases = [];
+  let sources = [];
+  try {
+    [cases, sources] = await Promise.all([listCases(), listOfficialSources()]);
+  } catch (err) {
+    body.innerHTML = `<p class="text-muted">${escapeHtml(err.message)}</p>`;
+    return;
+  }
+  if (cases.length === 0 || sources.length === 0) {
+    body.innerHTML = `<p class="text-muted">${t("official_sync_no_cases")}</p>`;
+    return;
+  }
+  const lang = getLang();
+  body.innerHTML = `
+    <div class="search-form-grid">
+      <div class="form-group">
+        <label>${t("official_sync_case")}</label>
+        <select id="osync-case">
+          ${cases.map((c) => `<option value="${c.id}">${c.case_number}/${c.case_year} — ${escapeHtml(lang === "ar" ? c.parties_ar : c.parties_en)}</option>`).join("")}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>${t("official_sync_source")}</label>
+        <select id="osync-source">
+          ${sources.map((s) => `<option value="${s.id}" data-url="${s.base_url}">${escapeHtml(lang === "ar" ? s.name_ar : s.name_en)}${s.requires_captcha ? ` (${t("official_sync_captcha")})` : ""}</option>`).join("")}
+        </select>
+      </div>
+    </div>
+    <button type="button" class="btn btn-outline btn-sm" id="osync-open-btn">${icon("arrow-up-right-from-square")} ${t("official_sync_open")}</button>
+    <div style="margin-top:14px;">
+      <div class="search-form-grid">
+        <div class="form-group">
+          <label>${t("official_sync_outcome")}</label>
+          <select id="osync-outcome">
+            <option value="no_change">${t("official_sync_outcome_no_change")}</option>
+            <option value="change_recorded">${t("official_sync_outcome_change_recorded")}</option>
+            <option value="not_found">${t("official_sync_outcome_not_found")}</option>
+            <option value="blocked">${t("official_sync_outcome_blocked")}</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" id="osync-change-fields" style="display:none;">
+        <label>${t("official_sync_new_procedure_type")}</label>
+        <select id="osync-proc-type"></select>
+      </div>
+      <div class="form-group">
+        <label>${t("official_sync_note")}</label>
+        <textarea id="osync-note" rows="2"></textarea>
+      </div>
+      <button class="btn btn-primary btn-sm" id="osync-record-btn">${icon("paper-plane")} ${t("official_sync_record")}</button>
+    </div>
+  `;
+
+  body.querySelector("#osync-open-btn").addEventListener("click", () => {
+    const sel = body.querySelector("#osync-source");
+    const url = sel.options[sel.selectedIndex]?.getAttribute("data-url");
+    if (url) window.open(url, "_blank", "noopener,noreferrer");
+  });
+
+  const outcomeSelect = body.querySelector("#osync-outcome");
+  const changeFields = body.querySelector("#osync-change-fields");
+  const procTypeSelect = body.querySelector("#osync-proc-type");
+  let procTypesLoaded = false;
+  outcomeSelect.addEventListener("change", async () => {
+    const isChange = outcomeSelect.value === "change_recorded";
+    changeFields.style.display = isChange ? "" : "none";
+    if (isChange && !procTypesLoaded) {
+      try {
+        const types = await listProcedureTypes();
+        procTypeSelect.innerHTML = types.map((pt) => `<option value="${pt.id}">${escapeHtml(lang === "ar" ? pt.name_ar : pt.name_en)}</option>`).join("");
+        procTypesLoaded = true;
+      } catch (err) {
+        toast(err.message, "error");
+      }
+    }
+  });
+
+  body.querySelector("#osync-record-btn").addEventListener("click", async (e) => {
+    const btn = e.currentTarget;
+    const caseId = Number(body.querySelector("#osync-case").value);
+    const sourceId = Number(body.querySelector("#osync-source").value);
+    const outcome = outcomeSelect.value;
+    const rawNote = body.querySelector("#osync-note").value.trim() || null;
+    if (outcome === "change_recorded" && !procTypeSelect.value) {
+      toast(t("official_sync_new_procedure_type_required"), "error");
+      return;
+    }
+    const payload = { source_id: sourceId, outcome, raw_note: rawNote };
+    if (outcome === "change_recorded") {
+      payload.new_procedure = { procedure_type_id: Number(procTypeSelect.value), occurred_at: new Date().toISOString() };
+    }
+    btn.disabled = true;
+    try {
+      await recordOfficialCheck(caseId, payload);
+      toast(t("official_sync_recorded_success"), "success");
+      body.querySelector("#osync-note").value = "";
+    } catch (err) {
+      toast(err.message, "error");
+    } finally {
+      btn.disabled = false;
+    }
+  });
 }
 
 /**

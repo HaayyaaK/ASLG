@@ -413,8 +413,17 @@ def notify_task_assigned(db: Session, reminder: CaseReminder, assigner_name: str
     case = reminder.case
     case_label = f"{case.case_number}/{case.case_year}" if case else "—"
     when = reminder.due_at.strftime("%d %b %Y, %H:%M")
-    kind_ar = "طلب تحديث حالة" if reminder.type == "status_update_request" else "مهمة متابعة"
-    kind_en = "Status update request" if reminder.type == "status_update_request" else "Follow-up task"
+    # 'procedural_deadline' is a third CaseReminder.type, added by
+    # procedures.py — see models.py's comment on that column. Labelled
+    # explicitly rather than falling into the "Follow-up task" default so
+    # its origin (a computed legal deadline, not a task someone typed) is
+    # clear the moment the assignee is notified.
+    if reminder.type == "status_update_request":
+        kind_ar, kind_en = "طلب تحديث حالة", "Status update request"
+    elif reminder.type == "procedural_deadline":
+        kind_ar, kind_en = "موعد إجراء قانوني", "Procedural deadline"
+    else:
+        kind_ar, kind_en = "مهمة متابعة", "Follow-up task"
     try:
         _notify_once(
             db,
