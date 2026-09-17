@@ -488,7 +488,6 @@ export async function openCaseDetail(caseId, user) {
       }
     });
   }
-
 }
 
 /**
@@ -579,7 +578,11 @@ function wireLinkedClients(overlay, c) {
       const select = formHost.querySelector('#link-client-select');
       if (!select || !select.value) return;
       try {
-        await linkUserToCase(c.id, Number(select.value), formHost.querySelector('#link-can-upload').checked);
+        await linkUserToCase(
+          c.id,
+          Number(select.value),
+          formHost.querySelector('#link-can-upload').checked,
+        );
         toast(t('link_created_success'), 'success');
         formHost.innerHTML = '';
         await refreshLinks();
@@ -616,7 +619,10 @@ function wireProcedureSection(overlay, c, user) {
     let procedures = [];
     let nextActions = [];
     try {
-      [procedures, nextActions] = await Promise.all([listCaseProcedures(c.id), previewNextActions(c.id)]);
+      [procedures, nextActions] = await Promise.all([
+        listCaseProcedures(c.id),
+        previewNextActions(c.id),
+      ]);
     } catch (err) {
       host.innerHTML = `<p class="text-muted">${escapeHtml(err.message)}</p>`;
       return;
@@ -680,7 +686,10 @@ function wireProcedureSection(overlay, c, user) {
 
     host.querySelector('#proc-record-btn')?.addEventListener('click', async () => {
       const formHost = host.querySelector('#proc-record-form-host');
-      if (formHost.innerHTML) { formHost.innerHTML = ''; return; }
+      if (formHost.innerHTML) {
+        formHost.innerHTML = '';
+        return;
+      }
       let types = [];
       try {
         types = await listProcedureTypes();
@@ -712,7 +721,10 @@ function wireProcedureSection(overlay, c, user) {
         const typeId = Number(formHost.querySelector('#proc-type-select').value);
         const dateVal = formHost.querySelector('#proc-date-input').value;
         const notes = formHost.querySelector('#proc-notes-input').value.trim();
-        if (!dateVal) { toast(t('proc_date_required'), 'error'); return; }
+        if (!dateVal) {
+          toast(t('proc_date_required'), 'error');
+          return;
+        }
         btn.disabled = true;
         try {
           await recordProcedure(c.id, {
@@ -772,7 +784,17 @@ async function openNewCaseForm(onCreated) {
   overlay.querySelector('.modal-body').innerHTML = `
     <div class="search-form-grid">
       <div class="form-group"><label class="required">${t('case_number')}</label><input id="f-case-number" aria-required="true"/></div>
-      <div class="form-group"><label class="required">${t('case_year')}</label><input type="number" id="f-case-year" aria-required="true" value="${new Date().getFullYear()}"/></div>
+      <div class="form-group">
+        <label class="required">${t('automated_number')}</label>
+        <input id="f-automated-number" aria-required="true" inputmode="numeric" maxlength="9"
+               autocomplete="off" placeholder="202400001"/>
+        <div class="field-error" id="f-automated-number-error">${t('automated_number_invalid')}</div>
+        <!-- The year is DERIVED from the first four digits, never typed. Shown
+             back to the user so the value the server is about to infer is
+             visible before they save, rather than being a surprise on the
+             case list afterwards. -->
+        <div class="field-hint" id="f-derived-year">${t('case_year_derived_hint')}</div>
+      </div>
       <div class="form-group">
         <label class="required">${t('court')}</label>
         <select id="f-court" aria-required="true">
@@ -812,13 +834,63 @@ async function openNewCaseForm(onCreated) {
     <button class="btn btn-primary btn-block" id="case-form-submit">${icon('floppy-disk')} ${t('save')}</button>
   `;
 
+  // --- Automated Number: validate, and derive the year from its prefix ---
+  // The same rule the server enforces (backend/app/schemas.py's
+  // AUTOMATED_NUMBER_RE and its plausible-year check) and the database
+  // enforces again (ck_cases_automated_number_format). This copy exists
+  // purely so the user is told before they submit; it is never the
+  // authority. `case_year` is DERIVED here and re-derived server-side --
+  // the value sent is only a cross-check, and a disagreement is rejected
+  // rather than silently reconciled.
+  const autoEl = overlay.querySelector('#f-automated-number');
+  const derivedYearEl = overlay.querySelector('#f-derived-year');
+
+  function readAutomatedNumber() {
+    const raw = autoEl.value.trim();
+    if (!/^\d{9}$/.test(raw)) return { ok: false, raw };
+    const year = Number(raw.slice(0, 4));
+    const maxYear = new Date().getFullYear() + 1;
+    if (year < 1970 || year > maxYear) return { ok: false, raw };
+    return { ok: true, raw, year };
+  }
+
+  function refreshAutomatedNumberFeedback({ markInvalid }) {
+    const parsed = readAutomatedNumber();
+    const group = autoEl.closest('.form-group');
+    // Only ever flag as invalid on blur or submit. Marking the field red
+    // while someone is still typing the second of nine digits is noise,
+    // not help.
+    group.classList.toggle('invalid', markInvalid && autoEl.value.trim() !== '' && !parsed.ok);
+    derivedYearEl.textContent = parsed.ok
+      // Interpolated raw, NOT through formatNumber(): that helper applies
+      // locale digit grouping, which is right for a money amount and wrong
+      // for a year -- it rendered 2026 as "2,026". A year is an identifier
+      // here, not a quantity, and it has to match the Latin digits shown in
+      // the field itself in both languages.
+      ? `${t('case_year')}: ${parsed.year}`
+      : t('case_year_derived_hint');
+    return parsed;
+  }
+
+  autoEl.addEventListener('input', () => refreshAutomatedNumberFeedback({ markInvalid: false }));
+  autoEl.addEventListener('blur', () => refreshAutomatedNumberFeedback({ markInvalid: true }));
+
   overlay.querySelector('#case-form-submit').addEventListener('click', async () => {
     const caseNumber = overlay.querySelector('#f-case-number').value.trim();
-    const caseYear = Number(overlay.querySelector('#f-case-year').value);
+    const automated = refreshAutomatedNumberFeedback({ markInvalid: true });
     const courtId = overlay.querySelector('#f-court').value;
     const partiesAr = overlay.querySelector('#f-parties-ar').value.trim();
-    if (!caseNumber || !caseYear || !courtId || !partiesAr) {
+    if (!caseNumber || !automated.raw || !courtId || !partiesAr) {
       toast(t('required'), 'error');
+      return;
+    }
+    if (!automated.ok) {
+      // Distinct from the generic "required" message above: the field IS
+      // filled in, it is the shape that is wrong, and saying so is the
+      // difference between a user fixing it and a user retyping the same
+      // thing.
+      toast(t('automated_number_invalid'), 'error');
+      autoEl.focus();
       return;
     }
     const nextHearing = overlay.querySelector('#f-next-hearing').value;
@@ -826,7 +898,12 @@ async function openNewCaseForm(onCreated) {
     try {
       await createCase({
         case_number: caseNumber,
-        case_year: caseYear,
+        automated_number: automated.raw,
+        // Sent as a cross-check only. The server re-derives this from
+        // automated_number's prefix and returns 422 if the two disagree,
+        // so a stale or tampered form cannot file a case under a year its
+        // own Automated Number contradicts.
+        case_year: automated.year,
         court_id: Number(courtId),
         category_ar: overlay.querySelector('#f-category-ar').value.trim() || null,
         category_en: overlay.querySelector('#f-category-en').value.trim() || null,
@@ -843,10 +920,16 @@ async function openNewCaseForm(onCreated) {
       closeModal();
       await onCreated();
     } catch (err) {
-      toast(
-        err.message.includes('already exists') ? t('case_number_year_conflict') : err.message,
-        'error',
-      );
+      // Two different 409s are possible now and they need different fixes:
+      // a clashing number+year means change one of those, while a clashing
+      // Automated Number means this case is already filed under a
+      // different short number. The server's message for the latter names
+      // the existing case, so it is shown verbatim rather than replaced
+      // with a generic string that would throw that detail away.
+      const msg = err.message || '';
+      if (msg.includes('Automated Number')) toast(msg, 'error');
+      else if (msg.includes('already exists')) toast(t('case_number_year_conflict'), 'error');
+      else toast(msg, 'error');
     }
   });
 }

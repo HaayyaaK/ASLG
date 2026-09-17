@@ -146,7 +146,7 @@ def _mysqldump_bytes() -> bytes:
         cnf.write(
             "[client]\n"
             f"user={settings.db_user}\n"
-            f"password={settings.db_password}\n"
+            f"password={settings.db_password.get_secret_value()}\n"
             f"host={settings.db_host}\n"
             f"port={settings.db_port}\n"
         )
@@ -266,7 +266,7 @@ def _mysql_restore(sql_path: Path):
         cnf.write(
             "[client]\n"
             f"user={settings.db_user}\n"
-            f"password={settings.db_password}\n"
+            f"password={settings.db_password.get_secret_value()}\n"
             f"host={settings.db_host}\n"
             f"port={settings.db_port}\n"
         )

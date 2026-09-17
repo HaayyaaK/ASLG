@@ -80,7 +80,8 @@ def test_create_case_works_against_the_live_premigration_schema(premigration_cli
     tc, base_data = premigration_client
     _login_as(base_data["admin"])
     resp = tc.post("/api/cases", json={
-        "case_number": "9999", "case_year": 2026, "court_id": base_data["court"].id,
+        "case_number": "9999", "automated_number": "202609999", "case_year": 2026,
+        "court_id": base_data["court"].id,
         "parties_ar": "طرف تجريبي", "stage": "new",
     })
     assert resp.status_code == 201, resp.text

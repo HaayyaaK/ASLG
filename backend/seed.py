@@ -384,7 +384,13 @@ def run_seed(db):
         is_admin = u["role"] == "Admin"
         if is_admin and admin_already_exists:
             continue
-        password = settings.seed_admin_password if is_admin else settings.seed_staff_password
+        secret = settings.seed_admin_password if is_admin else settings.seed_staff_password
+        # Unwrapped BEFORE the truthiness test below, not after: these are
+        # SecretStr now, and SecretStr("") is a truthy OBJECT. Testing
+        # `secret` directly would let an env var that is set-but-empty slip
+        # past the guard and seed a user with an empty password -- the exact
+        # class of silent fallback this check exists to prevent.
+        password = secret.get_secret_value() if secret else None
         if not password:
             var_name = "ASLG_SEED_ADMIN_PASSWORD" if is_admin else "ASLG_SEED_STAFF_PASSWORD"
             raise RuntimeError(f"Set {var_name} before running seed — no seed password is hardcoded in this file.")
@@ -445,7 +451,14 @@ def run_seed(db):
         summary_en="Labor dues lawsuit - closed via amicable settlement.",
         next_hearing_at=None,
     )
+    # Automated Number is derived rather than written out five times, using
+    # exactly the rule db/migration_automated_case_number.sql's backfill
+    # applies: CONCAT(case_year, LPAD(case_number, 5, '0')). Keeping the two
+    # in step means a freshly seeded database is byte-identical to a migrated
+    # one for these rows, so a Factory Reset cannot silently produce demo
+    # data that disagrees with what the migration would have produced.
     for c in (case1, case2, case3, case4, case5):
+        c.automated_number = f"{c.case_year}{c.case_number.zfill(5)}"
         db.add(c)
     db.flush()
 

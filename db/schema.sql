@@ -103,6 +103,7 @@ CREATE TABLE courts (
 CREATE TABLE cases (
   id                 BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
   case_number        VARCHAR(32)  NOT NULL,
+  automated_number   VARCHAR(32)  NOT NULL,             -- "الرقم الآلي", format YYYYNNNNN; case_year is derived from its first 4 digits
   case_year          SMALLINT     NOT NULL,
   court_id           SMALLINT UNSIGNED NOT NULL,
   category_ar        VARCHAR(80),
@@ -120,7 +121,13 @@ CREATE TABLE cases (
   updated_at         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_cases_court  FOREIGN KEY (court_id) REFERENCES courts(id),
   CONSTRAINT fk_cases_lawyer FOREIGN KEY (assigned_lawyer_id) REFERENCES users(id) ON DELETE SET NULL,
+  -- Format enforced in the database as well as in the API, so a write that
+  -- bypasses the application entirely (a manual INSERT, a restored dump, a
+  -- script) cannot introduce a value the app would later fail to parse a
+  -- year out of. Requires MySQL 8.0.16+; this server is 8.4.
+  CONSTRAINT ck_cases_automated_number_format CHECK (automated_number REGEXP '^[0-9]{9}$'),
   UNIQUE KEY uq_case_number_year (case_number, case_year),
+  UNIQUE KEY uq_cases_automated_number (automated_number),
   INDEX idx_cases_status (status),
   INDEX idx_cases_stage (stage),
   INDEX idx_cases_civil_id (civil_id),

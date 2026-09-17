@@ -58,7 +58,8 @@ def _scope_query(db: Session, user: User):
 
 def _to_out(c: Case, watching_ids: set[int]) -> CaseOut:
     return CaseOut(
-        id=c.id, case_number=c.case_number, case_year=c.case_year,
+        id=c.id, case_number=c.case_number, automated_number=c.automated_number,
+        case_year=c.case_year,
         court_name_ar=c.court.name_ar, court_name_en=c.court.name_en,
         category_ar=c.category_ar, category_en=c.category_en,
         parties_ar=c.parties_ar, parties_en=c.parties_en, civil_id=c.civil_id,
@@ -136,6 +137,11 @@ def create_case(payload: CaseCreateRequest, user: User = Depends(get_current_use
     if payload.stage not in STAGES:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Invalid stage '{payload.stage}'")
 
+    # `payload.case_year` is not the client's copy: CaseCreateRequest's
+    # model validator re-derives it from automated_number's first four
+    # digits and rejects a mismatch, so by the time it reaches here it is
+    # the server's own value. Both duplicate checks below therefore run
+    # against trusted data.
     existing = (
         db.query(Case)
         .filter(Case.case_number == payload.case_number, Case.case_year == payload.case_year)
@@ -144,8 +150,23 @@ def create_case(payload: CaseCreateRequest, user: User = Depends(get_current_use
     if existing:
         raise HTTPException(status.HTTP_409_CONFLICT, "A case with this number and year already exists")
 
+    # Checked explicitly rather than left to uq_cases_automated_number: the
+    # bare IntegrityError from the database surfaces as a 500, and "this
+    # Automated Number is already on another case" is a routine, correctable
+    # user mistake that deserves a 409 with a message naming the field.
+    duplicate_auto = (
+        db.query(Case).filter(Case.automated_number == payload.automated_number).first()
+    )
+    if duplicate_auto:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            f"Automated Number {payload.automated_number} is already used by case "
+            f"{duplicate_auto.case_number}/{duplicate_auto.case_year}",
+        )
+
     case = Case(
         case_number=payload.case_number,
+        automated_number=payload.automated_number,
         case_year=payload.case_year,
         court_id=payload.court_id,
         category_ar=payload.category_ar,

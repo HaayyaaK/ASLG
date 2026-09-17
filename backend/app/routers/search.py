@@ -72,7 +72,8 @@ def _cases_scope(db: Session, user: User):
 
 def _case_to_out(c: Case) -> CaseOut:
     return CaseOut(
-        id=c.id, case_number=c.case_number, case_year=c.case_year,
+        id=c.id, case_number=c.case_number, automated_number=c.automated_number,
+        case_year=c.case_year,
         court_name_ar=c.court.name_ar, court_name_en=c.court.name_en,
         category_ar=c.category_ar, category_en=c.category_en,
         parties_ar=c.parties_ar, parties_en=c.parties_en, civil_id=c.civil_id,
@@ -96,20 +97,26 @@ def search_case_number(
     q = _cases_scope(db, user).options(joinedload(Case.court), joinedload(Case.assigned_lawyer))
     if court_level:
         q = q.join(Court).filter(Court.level_code == court_level)
-    # "Automated Number" has no dedicated column yet — it's an alternate way
-    # to identify the same case (the number a client/court quotes instead of
-    # the short case_number/case_year pair) — so it matches the same
-    # case_number column. Given together with Case Number, either one
-    # matching is enough (OR), since a caller who supplies both is trying two
-    # ways to find the same case, not narrowing to one that satisfies both.
+    # "Automated Number" now has its own column (db/migration_automated_case_
+    # number.sql). It previously did not, and this filter matched it against
+    # `case_number` as an alias — which meant searching by Automated Number
+    # could only ever find a case whose SHORT number happened to contain the
+    # same digits, i.e. almost never. It now matches the real column.
+    #
+    # Given together with Case Number, either one matching is still enough
+    # (OR): a caller who supplies both is trying two ways to find the same
+    # case, not narrowing to one that satisfies both.
     if case_number and automated_number:
         q = q.filter(
-            or_(Case.case_number.contains(case_number), Case.case_number.contains(automated_number))
+            or_(
+                Case.case_number.contains(case_number),
+                Case.automated_number.contains(automated_number),
+            )
         )
     elif case_number:
         q = q.filter(Case.case_number.contains(case_number))
     elif automated_number:
-        q = q.filter(Case.case_number.contains(automated_number))
+        q = q.filter(Case.automated_number.contains(automated_number))
     if case_year:
         q = q.filter(Case.case_year == int(case_year))
     if party:
@@ -117,12 +124,25 @@ def search_case_number(
         q = q.filter(or_(Case.parties_ar.like(like), Case.parties_en.like(like), Case.civil_id.like(like)))
 
     rows = q.all()
-    exact_target = case_number or automated_number
-    if exact_target:
+    if case_number or automated_number:
         # Partial matching stays (searching "112" should still find 1123/2024),
-        # but an exact case-number hit is what the user almost always meant, so
-        # it is never buried under longer numbers that merely contain it.
-        rows.sort(key=lambda c: (c.case_number != exact_target, c.case_number, -c.case_year))
+        # but an exact hit is what the user almost always meant, so it is
+        # never buried under longer numbers that merely contain it.
+        #
+        # Each term is compared against ITS OWN column. This used to be a
+        # single `exact_target = case_number or automated_number` tested
+        # against `case_number`, which was fine while Automated Number was
+        # an alias for that same column — but once they became separate
+        # columns, an Automated Number search would compare "202401123"
+        # against case_number "1123", never match, and silently lose the
+        # exact-match boost entirely.
+        def _rank(c):
+            exact = (case_number and c.case_number == case_number) or (
+                automated_number and c.automated_number == automated_number
+            )
+            return (not exact, c.case_number, -c.case_year)
+
+        rows.sort(key=_rank)
     else:
         rows.sort(key=lambda c: (c.case_number, -c.case_year))
     return [_case_to_out(c) for c in rows]

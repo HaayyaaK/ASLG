@@ -100,6 +100,14 @@ def premigration_db() -> Session:
             CREATE TABLE cases (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               case_number VARCHAR(32) NOT NULL,
+              -- Present here because db/migration_automated_case_number.sql
+              -- HAS been applied to the live database (17 Sep 2026), unlike
+              -- the Procedural Intelligence migration this fixture exists to
+              -- model the absence of. This table is "the live schema", not
+              -- "the schema before every pending migration" -- so a column
+              -- that is really there has to be here too, or these tests
+              -- would assert against a database that no longer exists.
+              automated_number VARCHAR(32) NOT NULL UNIQUE,
               case_year SMALLINT NOT NULL,
               court_id SMALLINT NOT NULL,
               category_ar VARCHAR(80),
@@ -210,7 +218,7 @@ def _seed_base_data(db: Session) -> dict:
     db.flush()
 
     case = Case(
-        case_number="1000", case_year=2026, court_id=court.id,
+        case_number="1000", automated_number="202601000", case_year=2026, court_id=court.id,
         parties_ar="طرف 1 ضد طرف 2", parties_en="Party 1 v Party 2",
         civil_id="12345", assigned_lawyer_id=lawyer.id,
     )

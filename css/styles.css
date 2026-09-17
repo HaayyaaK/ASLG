@@ -646,6 +646,17 @@ a {
 .form-group.invalid .field-error {
   display: block;
 }
+/* A neutral note under a field -- not an error, so it stays visible at all
+   times rather than only in the .invalid state. Used by the New Case
+   modal's Automated Number field to show the year being derived from the
+   digits typed so far, so the value the server will infer is visible
+   BEFORE saving. `margin-block-start` rather than `margin-top` for the
+   same reason as everything else in this file: it mirrors under dir=rtl. */
+.field-hint {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  margin-block-start: var(--space-1);
+}
 
 .btn {
   display: inline-flex;

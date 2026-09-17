@@ -33,9 +33,19 @@ router = APIRouter(prefix="/api/internal", tags=["internal"])
 
 
 def _require_task_token(x_internal_task_token: str | None = Header(default=None)) -> None:
-    if not settings.internal_task_token:
+    # Unwrapped once, up front. `settings.internal_task_token` is a SecretStr
+    # now, and SecretStr("") is a truthy OBJECT -- testing it directly would
+    # mean an env var that is set-but-empty passed the "is it configured?"
+    # check and then acted as a shared secret of "". Unwrapping first keeps
+    # the original str semantics exactly: unset OR empty means refuse.
+    expected = (
+        settings.internal_task_token.get_secret_value()
+        if settings.internal_task_token
+        else None
+    )
+    if not expected:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "ASLG_INTERNAL_TASK_TOKEN is not configured")
-    if not x_internal_task_token or x_internal_task_token != settings.internal_task_token:
+    if not x_internal_task_token or x_internal_task_token != expected:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid or missing internal task token")
 
 

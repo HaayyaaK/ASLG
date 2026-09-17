@@ -43,7 +43,7 @@ def test_explicit_user_case_link_grants_visibility_independent_of_civil_id(db, b
     db.commit()
 
     other_case = Case(
-        case_number="2000", case_year=2026, court_id=base_data["court"].id,
+        case_number="2000", automated_number="202602000", case_year=2026, court_id=base_data["court"].id,
         parties_ar="طرف آخر", civil_id="9999999",
     )
     db.add(other_case)

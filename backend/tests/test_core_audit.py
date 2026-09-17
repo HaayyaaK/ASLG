@@ -149,7 +149,7 @@ def test_role_access_matrix(api, role_key, endpoint, expected):
 def test_client_sees_only_their_own_cases(api):
     tc, base_data, db = api
     other = Case(
-        case_number="7777", case_year=2026, court_id=base_data["court"].id,
+        case_number="7777", automated_number="202607777", case_year=2026, court_id=base_data["court"].id,
         parties_ar="طرف آخر", civil_id="not-the-client",
     )
     db.add(other)
@@ -168,8 +168,8 @@ def test_client_cannot_create_or_modify_a_case(api):
     tc, base_data, db = api
     _as(base_data["client"])
     created = tc.post("/api/cases", json={
-        "case_number": "6666", "case_year": 2026, "court_id": base_data["court"].id,
-        "parties_ar": "x",
+        "case_number": "6666", "automated_number": "202606666", "case_year": 2026,
+        "court_id": base_data["court"].id, "parties_ar": "x",
     })
     staged = tc.put(f"/api/cases/{base_data['case'].id}/stage", json={"stage": "closed"})
     assert created.status_code == 403
@@ -184,7 +184,8 @@ def test_case_create_read_update_flow(api):
     _as(base_data["admin"])
 
     created = tc.post("/api/cases", json={
-        "case_number": "4242", "case_year": 2026, "court_id": base_data["court"].id,
+        "case_number": "4242", "automated_number": "202604242", "case_year": 2026,
+        "court_id": base_data["court"].id,
         "parties_ar": "أ ضد ب", "parties_en": "A v B", "stage": "new",
     })
     assert created.status_code == 201
@@ -209,8 +210,8 @@ def test_duplicate_case_number_year_is_rejected(api):
     tc, base_data, db = api
     _as(base_data["admin"])
     payload = {
-        "case_number": "5150", "case_year": 2026, "court_id": base_data["court"].id,
-        "parties_ar": "x",
+        "case_number": "5150", "automated_number": "202605150", "case_year": 2026,
+        "court_id": base_data["court"].id, "parties_ar": "x",
     }
     assert tc.post("/api/cases", json=payload).status_code == 201
     assert tc.post("/api/cases", json=payload).status_code == 409
@@ -232,13 +233,116 @@ def test_search_by_case_number_and_automated_number(api):
     assert by_number.status_code == 200
     assert len(by_number.json()) == 1
 
-    # "Automated Number" is an alternate way of naming the same case, so
-    # supplying both must OR them, not AND them (search.py documents this).
-    both = tc.get("/api/search/case-number", params={"case_number": "1000", "automated_number": "zzz"})
+    # The same case is now reachable by its real Automated Number column
+    # (db/migration_automated_case_number.sql). Before that column existed
+    # this parameter was an alias that matched `case_number`, so searching
+    # by a genuine Automated Number could only ever find a case whose SHORT
+    # number happened to contain the same digits.
+    by_auto = tc.get("/api/search/case-number", params={"automated_number": "202601000"})
+    assert by_auto.status_code == 200
+    assert len(by_auto.json()) == 1
+    assert by_auto.json()[0]["case_number"] == "1000"
+
+    # Supplying both must OR them across the two different columns, not AND
+    # them: a caller giving both is trying two ways to find one case. Here
+    # the Automated Number is deliberately one that matches nothing, so only
+    # the OR semantics can return a row.
+    both = tc.get("/api/search/case-number",
+                  params={"case_number": "1000", "automated_number": "999999999"})
     assert len(both.json()) == 1
 
     no_match = tc.get("/api/search/case-number", params={"case_number": "does-not-exist"})
     assert no_match.json() == []
+
+
+def test_search_by_both_identifiers_matching_the_same_case(api):
+    tc, base_data, db = api
+    _as(base_data["admin"])
+    resp = tc.get(
+        "/api/search/case-number",
+        params={"case_number": "1000", "automated_number": "202601000"},
+    )
+    assert resp.status_code == 200
+    # One case, not two: the OR must not duplicate a row that satisfies
+    # both halves of the condition.
+    assert len(resp.json()) == 1
+    assert resp.json()[0]["case_number"] == "1000"
+
+
+def test_exact_automated_number_match_ranks_first(api):
+    """Pins the ranking fix made when the two columns were split apart.
+
+    The sort used to compute one `exact_target = case_number or
+    automated_number` and compare it against `c.case_number` only. Once
+    Automated Number became its own column that comparison could never
+    match, so an exact Automated Number hit silently lost its rank boost --
+    no error, just a worse result order that nobody would trace back here.
+
+    Making the boost observable needs care. Automated Numbers are all
+    exactly nine digits, so one can only CONTAIN another by being equal to
+    it -- a same-length decoy can never appear alongside an exact match.
+    The OR path is what makes it visible instead:
+
+      case_number="100"        partially matches BOTH cases, exactly neither
+      automated_number=...     exactly matches the second case only
+
+    so both rows come back, and only the second is an exact hit. Without
+    the fix, no row scores as exact and the order falls back to
+    case_number ascending, which puts "1000" first -- this test fails.
+    """
+    tc, base_data, db = api
+    _as(base_data["admin"])
+    # Fixture case is 1000/2026. "100" is a prefix of both short numbers.
+    db.add(Case(
+        case_number="10001", automated_number="202688888", case_year=2026,
+        court_id=base_data["court"].id, parties_ar="طعم",
+    ))
+    db.commit()
+
+    resp = tc.get(
+        "/api/search/case-number",
+        params={"case_number": "100", "automated_number": "202688888"},
+    )
+    assert resp.status_code == 200
+    rows = resp.json()
+    assert len(rows) == 2, f"expected both cases back from the OR, got {len(rows)}"
+    assert rows[0]["automated_number"] == "202688888", (
+        "the exact Automated Number match is not ranked first -- the "
+        "exact-match boost is comparing against the wrong column again"
+    )
+
+
+def test_automated_number_search_does_not_match_the_case_number_column(api):
+    """Proves the two columns are genuinely separate.
+
+    The obvious version of this test passes vacuously: searching
+    automated_number="1000" against fixture case 1000/2026 DOES return it,
+    because that case's automated number is 202601000 and the filter is a
+    `contains`. So this builds a case whose Automated Number is deliberately
+    UNRELATED to its short number -- possible because only the migration's
+    backfill used the derivation rule, not the modal -- and then searches
+    for the short number in the Automated Number field. A hit here would
+    mean the alias behaviour came back.
+    """
+    tc, base_data, db = api
+    _as(base_data["admin"])
+    db.add(Case(
+        case_number="1234", automated_number="202677777", case_year=2026,
+        court_id=base_data["court"].id, parties_ar="غير مرتبط",
+    ))
+    db.commit()
+
+    by_auto = tc.get("/api/search/case-number", params={"automated_number": "1234"})
+    assert by_auto.status_code == 200
+    assert by_auto.json() == [], (
+        "searching the Automated Number field matched a value that exists "
+        "only in case_number -- the columns are not separate"
+    )
+
+    # Control: the same case IS reachable by its real Automated Number.
+    by_real = tc.get("/api/search/case-number", params={"automated_number": "202677777"})
+    assert len(by_real.json()) == 1
+    assert by_real.json()[0]["case_number"] == "1234"
 
 
 # ------------------------------------------------------- 4. documents/grants --
@@ -247,7 +351,7 @@ def test_search_by_case_number_and_automated_number(api):
 def test_document_listing_is_case_scoped_for_clients(api):
     tc, base_data, db = api
     other_case = Case(
-        case_number="8888", case_year=2026, court_id=base_data["court"].id,
+        case_number="8888", automated_number="202608888", case_year=2026, court_id=base_data["court"].id,
         parties_ar="غير ذي صلة", civil_id="someone-else",
     )
     db.add(other_case)
@@ -383,7 +487,7 @@ def test_notifications_are_scoped_to_their_recipient(api):
 def test_dashboard_stats_are_scoped_per_role(api):
     tc, base_data, db = api
     db.add(Case(
-        case_number="3333", case_year=2026, court_id=base_data["court"].id,
+        case_number="3333", automated_number="202603333", case_year=2026, court_id=base_data["court"].id,
         parties_ar="أخرى", civil_id="different-person",
     ))
     db.commit()

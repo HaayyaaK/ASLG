@@ -106,6 +106,26 @@ class Case(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     case_number: Mapped[str]
+    # The "Automated Number" (الرقم الآلي) -- the long identifier a court or
+    # client quotes instead of the short case_number/case_year pair. Format
+    # YYYYNNNNN: a four-digit year followed by five digits, nine characters
+    # in total.
+    #
+    # Until db/migration_automated_case_number.sql this had no column at
+    # all: routers/search.py accepted an `automated_number` query parameter
+    # and matched it against `case_number` as an alias, and said so in its
+    # own comment. It is now a real, stored, unique value; that comment has
+    # been rewritten accordingly.
+    #
+    # `case_year` deliberately stays. It is DERIVED from this column's first
+    # four digits when a case is created, which keeps uq_case_number_year,
+    # the "1123/2024" display format used in a dozen places, and every
+    # existing search path working unchanged.
+    #
+    # Declared `unique=True` to mirror the database, which enforces this
+    # three ways: NOT NULL, uq_cases_automated_number, and a CHECK on the
+    # nine-digit format (verified enforcing against the live server).
+    automated_number: Mapped[str] = mapped_column(unique=True)
     case_year: Mapped[int] = mapped_column(SmallInteger)
     court_id: Mapped[int] = mapped_column(ForeignKey("courts.id"))
     category_ar: Mapped[str | None] = mapped_column(default=None)

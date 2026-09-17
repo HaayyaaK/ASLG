@@ -13,6 +13,7 @@ not applied.
 """
 
 import pytest
+from pydantic import SecretStr
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -62,7 +63,7 @@ def test_scheduler_endpoint_skips_the_deadline_sweep_before_the_migration(
     CaseDeadline.__table__.drop(bind)
     ProcedureRule.__table__.drop(bind)
 
-    monkeypatch.setattr(settings, "internal_task_token", "test-token", raising=False)
+    monkeypatch.setattr(settings, "internal_task_token", SecretStr("test-token"), raising=False)
     tc, _ = premigration_client
 
     resp = tc.post(
@@ -79,7 +80,7 @@ def test_scheduler_endpoint_still_refuses_a_bad_token_before_the_migration(
     the token check still runs first."""
     from app.config import settings
 
-    monkeypatch.setattr(settings, "internal_task_token", "test-token", raising=False)
+    monkeypatch.setattr(settings, "internal_task_token", SecretStr("test-token"), raising=False)
     tc, _ = premigration_client
 
     assert tc.post("/api/internal/run-escalations").status_code == 401

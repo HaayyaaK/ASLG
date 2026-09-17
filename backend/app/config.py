@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -20,9 +20,21 @@ class Settings(BaseSettings):
     db_port: int = 3306
     db_name: str = "aslg_legal"
     db_user: str
-    db_password: str
+    # SecretStr, not str, for every credential below.
+    #
+    # pydantic's model repr prints field values, so ANY traceback that
+    # surfaces a Settings object -- a failed test fixture, an unhandled
+    # exception during startup -- printed the live database password in
+    # cleartext to the terminal, and would print it into CI logs if this
+    # suite is ever run there. Observed, not theorised: a fixture error
+    # during the Sept 2026 test work produced
+    #   model = Settings(db_host='127.0.0.1', ..., db_password='<real value>'
+    # SecretStr reprs as '**********' while carrying the value intact;
+    # every read site calls .get_secret_value() explicitly, which also
+    # makes each place a secret is actually used greppable.
+    db_password: SecretStr
 
-    jwt_secret: str
+    jwt_secret: SecretStr
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 720
 
@@ -33,8 +45,8 @@ class Settings(BaseSettings):
     # falling back to any hardcoded value. See seed.py's own docstring for
     # why: this file previously shipped a hardcoded default that ended up
     # being the real, never-rotated production Admin password.
-    seed_admin_password: str | None = Field(default=None, alias="ASLG_SEED_ADMIN_PASSWORD")
-    seed_staff_password: str | None = Field(default=None, alias="ASLG_SEED_STAFF_PASSWORD")
+    seed_admin_password: SecretStr | None = Field(default=None, alias="ASLG_SEED_ADMIN_PASSWORD")
+    seed_staff_password: SecretStr | None = Field(default=None, alias="ASLG_SEED_STAFF_PASSWORD")
 
     # Read by routers/internal.py's POST /api/internal/run-escalations only —
     # a shared secret the Windows Scheduled Task (description.md's
@@ -43,7 +55,7 @@ class Settings(BaseSettings):
     # JWT and NOT a user password. Optional with no default, like the seed
     # passwords above: unset means the endpoint refuses every call rather
     # than falling back to any hardcoded value.
-    internal_task_token: str | None = Field(default=None, alias="ASLG_INTERNAL_TASK_TOKEN")
+    internal_task_token: SecretStr | None = Field(default=None, alias="ASLG_INTERNAL_TASK_TOKEN")
 
     upload_dir: str = "./uploads"
     max_upload_mb: int = 25
@@ -63,7 +75,7 @@ class Settings(BaseSettings):
     @property
     def database_url(self) -> str:
         return (
-            f"mysql+pymysql://{self.db_user}:{self.db_password}"
+            f"mysql+pymysql://{self.db_user}:{self.db_password.get_secret_value()}"
             f"@{self.db_host}:{self.db_port}/{self.db_name}?charset=utf8mb4"
         )
 

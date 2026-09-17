@@ -1,7 +1,20 @@
+import re
 from datetime import date, datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+
+# The Automated Number's shape: a four-digit year followed by five digits.
+# Mirrored in three other places on purpose -- the client input (maxlength
+# and a matching regex in js/pages/cases.js), and the database's own
+# ck_cases_automated_number_format CHECK. The client copy is UX, this one is
+# the rule, and the database's is the backstop for any write that bypasses
+# the API entirely (a manual INSERT, a restored dump, a script).
+AUTOMATED_NUMBER_RE = re.compile(r"^\d{9}$")
+# A case filed before the firm existed, or more than a year into the future,
+# is a typo rather than a real filing -- `999900001` is a plausible slip and
+# passes the regex above, but is not a year.
+AUTOMATED_NUMBER_MIN_YEAR = 1970
 
 
 class LoginRequest(BaseModel):
@@ -103,6 +116,10 @@ class CaseOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     case_number: str
+    # Returned so a search result can show WHICH identifier matched, and so
+    # the case-detail view can display it. `case_number`/`case_year` remain
+    # the display identity ("1123/2024") everywhere they already were.
+    automated_number: str
     case_year: int
     court_name_ar: str
     court_name_en: str
@@ -133,7 +150,11 @@ class CaseStageUpdateRequest(BaseModel):
 
 class CaseCreateRequest(BaseModel):
     case_number: str
-    case_year: int
+    automated_number: str
+    # Optional on the wire, and never trusted when present: the server
+    # re-derives it from automated_number's first four digits. See
+    # `_derive_and_check_case_year` below.
+    case_year: int | None = None
     court_id: int
     category_ar: str | None = None
     category_en: str | None = None
@@ -145,6 +166,57 @@ class CaseCreateRequest(BaseModel):
     summary_en: str | None = None
     stage: str = "new"
     next_hearing_at: datetime | None = None
+
+    @field_validator("automated_number")
+    @classmethod
+    def _check_automated_number(cls, v: str) -> str:
+        """Format and plausibility, in that order.
+
+        Whitespace is stripped rather than rejected: a number pasted from an
+        email or a court PDF very often arrives with a trailing space, and
+        failing that is a pointless obstacle. Everything else is rejected
+        outright — there is no silent normalisation of digits, because
+        guessing at what the user meant is how a case gets filed under the
+        wrong identifier.
+        """
+        v = (v or "").strip()
+        if not AUTOMATED_NUMBER_RE.match(v):
+            raise ValueError(
+                "Automated Number must be exactly 9 digits in the form YYYYNNNNN (e.g. 202400001)"
+            )
+        year = int(v[:4])
+        max_year = datetime.utcnow().year + 1
+        if not (AUTOMATED_NUMBER_MIN_YEAR <= year <= max_year):
+            raise ValueError(
+                f"Automated Number starts with '{year}', which is not a plausible filing year "
+                f"({AUTOMATED_NUMBER_MIN_YEAR}-{max_year})"
+            )
+        return v
+
+    @model_validator(mode="after")
+    def _derive_and_check_case_year(self):
+        """`case_year` is derived here, never taken from the client.
+
+        The frontend shows the derived year back to the user as a read-only
+        field and sends it along, but a value that arrives over HTTP is an
+        assertion, not a fact: anything from a stale form to a hand-crafted
+        request could carry a year that disagrees with the number it is
+        supposed to come from. Since `case_year` is half of
+        uq_case_number_year and is what the whole app displays as
+        "1123/2024", letting the two drift apart would mean a case whose
+        printed identity contradicts its own Automated Number.
+
+        So the server recomputes it, and a mismatch is a 422 rather than a
+        silent correction — if the client and server disagree about what
+        case this is, that is worth surfacing, not papering over.
+        """
+        derived = int(self.automated_number[:4])
+        if self.case_year is not None and self.case_year != derived:
+            raise ValueError(
+                f"case_year {self.case_year} does not match the Automated Number's year prefix ({derived})"
+            )
+        self.case_year = derived
+        return self
 
 
 class CourtOut(BaseModel):
