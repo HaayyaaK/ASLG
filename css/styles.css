@@ -2507,6 +2507,60 @@ tbody tr:hover {
        has no scrolling containers at all.
    ========================================================================== */
 
+/* ---------- Idle session warning (js/idle.js) ----------
+   z-index sits one above .modal-overlay (100): this can appear while the
+   user has a case or document modal open, and a "you are about to be signed
+   out" notice that renders *behind* the dialog it is warning about would be
+   worse than not showing it at all.
+
+   Deliberately NOT reusing .modal-overlay: that class is driven by an .open
+   class for its fade-in and is closed by Escape and backdrop clicks, neither
+   of which should dismiss this. Sized entirely in tokens/rem so it tracks
+   the user's font-size setting, and laid out with logical properties so it
+   mirrors correctly in Arabic. */
+.idle-warning-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 101;
+  background: rgba(10, 20, 40, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+}
+.idle-warning-box {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-6);
+  max-width: 26rem;
+  width: 100%;
+  text-align: center;
+}
+.idle-warning-icon {
+  font-size: var(--text-2xl);
+  color: var(--color-warning);
+  margin-bottom: var(--space-2);
+}
+.idle-warning-box h3 {
+  margin: 0 0 var(--space-2);
+}
+.idle-warning-countdown {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  /* Tabular figures so the seconds ticking down do not make the whole
+     dialog jitter as glyph widths change. */
+  font-variant-numeric: tabular-nums;
+  margin: var(--space-3) 0 var(--space-4);
+}
+.idle-warning-actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
 #print-root {
   display: none;
 }
@@ -2517,7 +2571,8 @@ tbody tr:hover {
      mount directly on <body> and so need naming separately. */
   #app-root,
   .toast-container,
-  .modal-overlay {
+  .modal-overlay,
+  .idle-warning-overlay {
     display: none !important;
   }
 

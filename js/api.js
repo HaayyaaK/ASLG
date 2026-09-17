@@ -31,17 +31,84 @@ export function getPermission(module) {
   return getPermissions()[module] ?? "none";
 }
 
+/**
+ * Request timeouts.
+ *
+ * `fetch` has NO default timeout: a request that never gets a response waits
+ * forever, and because every page renders a spinner first and fills it in
+ * afterwards, "waits forever" looks exactly like the application has frozen.
+ * That is the shape of the freeze this app was reported to have (see
+ * `js/idle.js` and the router's error handling in `js/app.js` for the other
+ * two halves of the same fix).
+ *
+ * The trigger is ordinary operation, not a bug: this site's IIS application
+ * pool is configured `idleTimeout: 00:20:00` with `idleTimeoutAction: Terminate`,
+ * and the Windows event log records the ASLG worker being "shutdown due to
+ * inactivity" ten or more times a day. The next request after that has to
+ * cold-start Python + uvicorn + SQLAlchemy — measured at ~1.4s just to import
+ * the app module, so roughly 2-4s in practice before the first byte.
+ *
+ * Uploads get their own, far longer budget: MAX_UPLOAD_MB is 25, and a large
+ * file on a slow connection legitimately takes minutes. Applying the normal
+ * timeout to those would abort perfectly healthy uploads.
+ */
+const REQUEST_TIMEOUT_MS = 20000;
+const UPLOAD_TIMEOUT_MS = 180000;
+const COLD_START_RETRY_DELAY_MS = 1200;
+
+/** Error thrown when a request exceeded its own timeout. Typed so callers
+ *  (and the router's error state) can tell "the server is slow/unreachable"
+ *  apart from "the server said no". */
+export class RequestTimeoutError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "RequestTimeoutError";
+    this.isTimeout = true;
+  }
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 async function request(path, { method = "GET", body, isForm = false, rawResponse = false } = {}) {
   const session = getSession();
   const headers = {};
   if (!isForm) headers["Content-Type"] = "application/json";
   if (session?.token) headers["Authorization"] = `Bearer ${session.token}`;
 
-  const res = await fetch(`${API_BASE}${path}`, {
+  const init = {
     method,
     headers,
     body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
-  });
+  };
+  const timeoutMs = isForm ? UPLOAD_TIMEOUT_MS : REQUEST_TIMEOUT_MS;
+
+  let res;
+  try {
+    res = await fetchWithTimeout(path, init, timeoutMs);
+  } catch (err) {
+    // Retry ONCE, and ONLY when `fetch` itself rejected rather than timed
+    // out. That distinction carries two separate guarantees:
+    //
+    //   Safety — a rejected `fetch` means no response was ever received, so
+    //   the request cannot have been applied server-side and replaying it is
+    //   safe for any method, POST included. A request that TIMED OUT may
+    //   well have reached the server and been applied; replaying it could
+    //   create a duplicate case or a duplicate note, so it never is.
+    //
+    //   Speed — a refused connection fails in milliseconds, so this retry
+    //   costs nothing. Retrying after a timeout was measured end-to-end at
+    //   43s before the user saw anything (20s + delay + 20s), and bought
+    //   almost nothing: a server that did not answer within 20s is very
+    //   unlikely to answer within the next 20s. One timeout, then the error
+    //   state with its Retry button, puts the user back in control sooner.
+    //
+    // This is exactly the cold-start window: IIS tears the worker down after
+    // 20 minutes idle, and the connection is refused until uvicorn is
+    // listening again.
+    if (err.isTimeout) throw err;
+    await sleep(COLD_START_RETRY_DELAY_MS);
+    res = await fetchWithTimeout(path, init, timeoutMs);
+  }
 
   if (res.status === 401) {
     clearSession();
@@ -66,9 +133,50 @@ async function request(path, { method = "GET", body, isForm = false, rawResponse
   return res.json();
 }
 
+/**
+ * `fetch` plus an AbortController-backed deadline.
+ *
+ * The timer is always cleared in `finally`, including on success — leaving it
+ * pending would fire an abort against an already-settled controller (harmless)
+ * but would also keep a timer alive per request, which on a page that polls
+ * would accumulate.
+ *
+ * An abort surfaces as a DOMException named "AbortError"; it is re-thrown as
+ * a RequestTimeoutError so callers never have to know that detail, and so a
+ * genuine network failure (fetch's own TypeError) stays distinguishable from
+ * a timeout — the retry rule above depends on telling those two apart.
+ */
+async function fetchWithTimeout(path, init, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(`${API_BASE}${path}`, { ...init, signal: controller.signal });
+  } catch (err) {
+    if (err.name === "AbortError") {
+      throw new RequestTimeoutError(`Request timed out after ${Math.round(timeoutMs / 1000)}s`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // ---------------- Auth ----------------
 export const loginRequest = (username, password) => request("/auth/login", { method: "POST", body: { username, password } });
 export const logoutRequest = () => request("/auth/logout", { method: "POST" });
+/**
+ * Re-issues the caller's token with a fresh expiry and returns the current
+ * user + permissions alongside it (backend/app/routers/auth.py `me`).
+ *
+ * This is what "Stay logged in" calls, so extending a session is a real
+ * server-side extension rather than a client-side timer reset that would
+ * leave the JWT quietly expiring underneath the user. Unlike /auth/login it
+ * does not touch `last_login_at` and writes no activity-log row, so keeping a
+ * session alive never looks like a fresh sign-in in the audit trail. It also
+ * returns permissions, so a role change made by an admin takes effect at the
+ * next renewal instead of requiring the user to log out and back in.
+ */
+export const refreshSession = () => request("/auth/me");
 
 // ---------------- Users (Admin) ----------------
 export const listUsers = () => request("/users");

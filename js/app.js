@@ -1,7 +1,8 @@
 import { t, getLang, setLang, applyLangToDocument } from "./i18n.js";
 import { getPermission, listNotifications } from "./api.js";
 import { getCurrentUser, logout } from "./auth.js";
-import { icon, brandMark, roleAvatar } from "./ui.js";
+import { icon, brandMark, roleAvatar, toast, escapeHtml } from "./ui.js";
+import { startIdleTimer, stopIdleTimer } from "./idle.js";
 import * as loginPage from "./pages/login.js";
 import * as dashboardPage from "./pages/dashboard.js";
 import * as searchPage from "./pages/search.js";
@@ -62,7 +63,33 @@ function wireFormLabels(scope) {
 }
 new MutationObserver(() => wireFormLabels(document.body)).observe(document.body, { childList: true, subtree: true });
 
+/**
+ * Last-resort visibility for failures that would otherwise be silent.
+ *
+ * Page modules are `async render(container, user)`. Before this existed the
+ * router called them without awaiting and without a catch, so any rejection
+ * — a failed request, a typo in a page module — became an unhandled promise:
+ * nothing logged to the user, no error state, and the page left showing
+ * whatever partial markup it had written, which is almost always a spinner.
+ * An operator cannot tell that apart from the application having frozen, and
+ * that is exactly how the freeze on this deployment was described.
+ *
+ * These two handlers are the net under everything the explicit handling
+ * below might still miss. They only surface the problem; they never try to
+ * recover, because a handler that guesses at recovery hides the next bug.
+ */
+function installGlobalErrorHandlers() {
+  window.addEventListener("unhandledrejection", (e) => {
+    console.error("[ASLG] Unhandled promise rejection:", e.reason);
+    toast(e.reason?.message || t("unexpected_error"), "error");
+  });
+  window.addEventListener("error", (e) => {
+    console.error("[ASLG] Uncaught error:", e.error || e.message);
+  });
+}
+
 function boot() {
+  installGlobalErrorHandlers();
   applyLangToDocument();
   const user = getCurrentUser();
   if (user) {
@@ -75,6 +102,7 @@ function boot() {
 
 function renderLogin() {
   if (activePage?.destroy) activePage.destroy();
+  stopIdleTimer();
   activePage = null;
   loginPage.render(root, (user) => {
     location.hash = "#/dashboard";
@@ -177,6 +205,11 @@ function renderShell(user) {
 
   wireShellEvents(user);
   refreshNotifBadge();
+  // Started here rather than in boot(): the shell only renders for a
+  // signed-in user, and renderShell() is also what a language toggle goes
+  // through, so restarting the timer from a known-good state is correct in
+  // both paths. renderLogin()/doLogout() stop it again.
+  startIdleTimer(doLogout);
   handleRoute();
 }
 
@@ -214,11 +247,16 @@ function wireShellEvents(user) {
   });
 }
 
-function doLogout() {
+function doLogout(opts = {}) {
   if (activePage?.destroy) activePage.destroy();
+  stopIdleTimer();
   logout();
   location.hash = "";
   renderLogin();
+  // Said after renderLogin() so the toast lands on the screen the user is
+  // actually looking at, and only for an automatic sign-out: someone who
+  // clicked Logout does not need to be told they were logged out.
+  if (opts.reason === "idle") toast(t("idle_signed_out"), "info");
 }
 
 function toggleLang(user) {
@@ -295,9 +333,37 @@ function handleRoute() {
     return;
   }
 
-  target.page.render(contentEl, user);
+  // Awaited via .catch() rather than left bare: see installGlobalErrorHandlers().
+  // A rejection here used to leave the page on its own loading spinner with
+  // nothing reported, which is indistinguishable from a frozen application.
+  // Now it replaces the spinner with a real, actionable error state.
+  Promise.resolve()
+    .then(() => target.page.render(contentEl, user))
+    .catch((err) => renderPageError(contentEl, err, user));
   activePage = target.page;
   refreshNotifBadge();
+}
+
+/**
+ * What the user sees when a page fails to render.
+ *
+ * A timeout is called out separately from any other failure because it needs
+ * a different response from the reader: "the server did not answer in time"
+ * is usually the IIS worker cold-starting after its 20-minute idle shutdown
+ * and Retry genuinely fixes it, whereas a 4xx/5xx message is a real answer
+ * from the server and retrying will very likely say the same thing again.
+ */
+function renderPageError(contentEl, err, user) {
+  console.error("[ASLG] Page render failed:", err);
+  const isTimeout = err?.isTimeout === true;
+  contentEl.innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon">${icon(isTimeout ? "clock" : "triangle-exclamation")}</div>
+      <p><b>${escapeHtml(isTimeout ? t("page_timeout_title") : t("page_error_title"))}</b></p>
+      <p class="text-muted">${escapeHtml(isTimeout ? t("page_timeout_body") : err?.message || t("unexpected_error"))}</p>
+      <button class="btn btn-primary" id="page-error-retry">${icon("arrows-rotate")} ${escapeHtml(t("retry"))}</button>
+    </div>`;
+  contentEl.querySelector("#page-error-retry")?.addEventListener("click", () => handleRoute());
 }
 
 boot();
