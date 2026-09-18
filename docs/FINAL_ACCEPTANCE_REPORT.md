@@ -20,7 +20,7 @@ checked live or measured. Anything that was not checked is labelled as such.
 | 3 | Move **Useful Kuwait Websites** to the Dashboard; replace card content with cover image + title | **Delivered, in the revised form** | The panel is on the Dashboard as a full-width row (`js/kuwait-websites.js`). On 2026-09-18 16:58 you replaced the cover-image cards with the Quick Actions button style (icon + label, icon-only below 768 px). The 4 links and their destinations are unchanged. The Arabic label is "الخدمات الإلكترونية للعدل" (Item 6). |
 | 4 | Make the **stat-grid** cards smaller with no wasted white space | **Delivered** | Sub-phase 3.1. `.stat-card` is tokenized (`--stat-card-padding`, `--stat-icon-size`, `--stat-value-size`) and the old 768 px override was removed. You accepted 3.1–3.3 on 2026-09-18 15:19. |
 | 5 | New design for the **Quick Case Access** (qa-panel) | **Delivered** | Ground-up rewrite with new `.qcp-*` classes (Gap C). The chip-to-filter and click-to-open behaviour is kept. The tile overflow was fixed with a 2-line clamp (approved 2026-09-18 18:03). |
-| 6 | Professional **CSS variables**; responsive on every screen from phones under 320 px to 4K TVs | **Partially delivered** | Tier 1 is 84% tokenized, measured in §3. **Tier 2 was missed**: the 5 duplicate `#12315a` colours are still hard-coded. Tier 3 is deferred by your decision. Responsive layout was checked at 320 / 375 / 767 / 768 / 1366 px, and the button labels up to 1920 px. **2560 px and 4K were not checked on the overhauled pages.** The resize tool doesn't work, and no 4K hardware is available. See §5 and §7. |
+| 6 | Professional **CSS variables**; responsive on every screen from phones under 320 px to 4K TVs | **Partially delivered** | Tier 1 is 84% tokenized, measured in §3. **Tier 2 complete as of 2026-09-19** (`82d4453`). Tier 3 is deferred by your decision. Responsive layout was checked at 320 / 375 / 767 / 768 / 1366 px, and the button labels up to 1920 px. **2560 px and 4K were not checked on the overhauled pages.** The resize tool doesn't work, and no 4K hardware is available. See §5 and §7. |
 | 7 | Upgrade the **Dashboard** to a professional, interactive, high-end dashboard | **Delivered** | Widgets built:<br>• Quick Actions row: 6 approved actions. "Sync Deadlines Now" only appears when the Deadlines permission is on, which it is not on this server.<br>• Stat cards and Tasks & Assignments cards, which open filtered lists.<br>• Quick Case Access.<br>• My Week and Watched Cases, side by side (Row A).<br>• Useful Kuwait Websites.<br>• Critical Upcoming Hearings.<br>• Action Stream.<br>• Command Palette (Ctrl+K).<br>The row layout follows your 2026-09-18 18:03 spec. Filing Trend and Recently-Viewed were built and then removed at your request (see §4). |
 
 **Summary:** 6 of 7 tasks delivered (2 of them in the form you revised), and 1 partially delivered (Task 6).
@@ -81,7 +81,7 @@ The tiers are the ones you approved on 2026-09-18 12:23 and put on record at 13:
 |---|---|---|---|
 | Tier 1, strict (every literal counts) | 193 | 67 (65 px + 2 colours) | **74%** |
 | Tier 1, excluding 1–2 px hairlines (borders, outlines, outline-offsets; normally left literal) | 193 | 36 (34 px + 2 colours) | **84%** |
-| Tier 2: the 5 duplicate `#12315a` | — | **5 of 5 still hard-coded** | **0% — not delivered** |
+| Tier 2: the 5 duplicate `#12315a` | 5 | **0 remaining** | **100% — complete as of 2026-09-19** (`82d4453`) |
 | Tier 3 | — | ~350 | **Deferred by your written decision** |
 
 **Remaining Tier 1 literals:**
@@ -91,7 +91,10 @@ The tiers are the ones you approved on 2026-09-18 12:23 and put on record at 13:
 - **Mostly one-off paddings and gaps:** 3–40 px.
 - **Two layout minimums:** `min-width: 180px` and a `220px` grid column.
 
-**Tier 2 miss:** all 5 are in the print stylesheet (`.print-head` and related rules, lines 3318–3420). No sub-phase edited that file for another reason, so the planned "find-and-replace while there" never happened. The fix is five replacements of `#12315a` with `var(--color-primary)`, which works inside `@media print`. It was **not** done here: it wasn't asked for in this batch, and you said no CSS polish as a substitute.
+**Tier 2 complete as of 2026-09-19.** All 5 values were in the print stylesheet (`.print-head` and related rules, lines 3318–3420). No sub-phase had edited that file for another reason, so the planned "find-and-replace while there" never happened during the overhaul. The first version of this report recorded it as missed; you approved the fix the same day. Commit `82d4453` replaces all 5 with `var(--color-primary)`:
+- `#12315a` now appears only in the token's own definition in `:root`.
+- `--color-primary` is defined once and never redefined, so the printed colour is identical.
+- The live page resolves the `.print-head` border to `rgb(18, 49, 90)`, which is `#12315a`.
 
 ---
 
@@ -188,13 +191,13 @@ There is no frontend test suite in this repo; the frontend was verified live (§
 | **KI-4**: Low-contrast focus rings on 6 components | **Resolved** (`3268d71`) | same |
 | **KI-5**: Arabic notifications contain English task titles | Deferred (low) to the i18n polish batch | same |
 | **KI-6**: One-off Arabic render in the embedded-frame checks | Not reproducible; logged for traceability | same |
-| **Tier 2**: 5 duplicate `#12315a` colours in the print stylesheet | **Not delivered**; a 5-line follow-up | §3 |
+| **Tier 2**: 5 duplicate `#12315a` colours in the print stylesheet | **Complete** as of 2026-09-19 (`82d4453`) | §3 |
 | **Tier 3**: ~350 untokenized values | Deferred by your written decision (2026-09-18 12:23 / 13:39) | §3 |
-| **2560 px / 4K** rendering | Not verified: no 4K hardware, resize tool doesn't work | §5 |
+| **2560 px / 4K** rendering | Not verified: no 4K hardware, resize tool doesn't work. Logged as **FO-1** | §5, `docs/KNOWN_ISSUES.md` |
 | **Screen-reader (AT) testing** | Not possible in this environment; ARIA checked by audit only | §2 |
-| Lawyer / Consultant / Delegate roles | Not tested live | §5 |
+| Lawyer / Consultant / Delegate roles | Not tested live. Logged as **FO-2** | §5, `docs/KNOWN_ISSUES.md` |
 | Official Sync panel and Deadlines-gated UI (Sync Deadlines Now, deadline stat cards) | Not testable: the permission is off on this server | §1 |
-| Revert runbook not updated after Merge B | Doc gap; later commits revert one at a time | §2 |
+| Revert runbook not updated after Merge B | Doc gap; later commits revert one at a time. Logged as **FO-3** | §2, `docs/KNOWN_ISSUES.md` |
 | Team Workload Meter; Quick Actions "Record a Procedure" and "Print Dashboard Summary" | Deferred at plan approval | brief, Part 3 |
 | Test password | You are to change it now that 3.7 is complete (per the brief) | — |
 
@@ -237,6 +240,11 @@ Times are commit times.
 | `f66496d` | 09-19 00:06 | docs(known-issues): log KI-5 English task titles in Arabic notifications |
 | `7a742b3` | 09-19 00:06 | chore(cases): verify assigned_lawyer requirement live after app pool recycle *(empty commit; message records the live check)* |
 | `26aa7a1` | 09-19 | docs(known-issues): log KI-6 one-off Arabic render in embedded-frame checks |
+| — | — | *Pushed up to here on 2026-09-19 (`28da6d0..26aa7a1`); the commits below come after that push.* |
+| `b224923` | 09-19 | docs: final acceptance report for CSS & Dashboard overhaul |
+| `82d4453` | 09-19 | fix(css): replace hardcoded #12315a with --color-primary token (Tier 2) |
+
+Two docs commits follow these: this report's Tier 2 status update and the FO-1 to FO-3 log. Their hashes are in `git log`.
 
 Some commits bundle earlier work. `fa07796` carries sub-phases 3.0–3.4, because they were never committed individually. `3e86183` and `4e7cf07` each bundle 2 of the 6 fixes you approved on 2026-09-18 18:03; you accepted that split at Gate 1.
 
@@ -259,6 +267,6 @@ Some commits bundle earlier work. `fa07796` carries sub-phases 3.0–3.4, becaus
 | ☑ | Merge B, tab-click refresh, responsive icon-only buttons, clamp fonts | 2026-09-18 23:01 | Merge B gate |
 | ☑ | Items 1–8, X1, X2; Decision A (require lawyer), Decision B (inline preload) | 2026-09-18 23:31 | Items gate |
 | ☑ | Final verification report; app-pool recycle; no production case created (Decision 3); KI-5; push to GitHub | 2026-09-19 00:04 | Final gate |
-| ☐ | **This 3.7 report** — pending your approval before it is committed | — | — |
-| ☐ | **Tier 2 follow-up** (5 × `#12315a` → `var(--color-primary)` in the print stylesheet) — awaiting your decision | — | — |
+| ☑ | This 3.7 report approved for commit | 2026-09-19 | 3.7 review |
+| ☑ | 3.7 report committed; Tier 2 fix approved and applied (`82d4453`); remaining gaps logged as FO-1 to FO-3 | 2026-09-19 | 3.7 review |
 | ☐ | **Change the test password** now that 3.7 is complete (per the brief) | — | — |
