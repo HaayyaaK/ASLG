@@ -11,7 +11,6 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png" />
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png" />
 <link rel="manifest" href="/assets/site.webmanifest" />
-<link rel="stylesheet" href="/_shared/fontawesome/7.3.1/css/all.min.css" />
 <!-- Login background preload, only when the login screen is what will render.
      A static <link rel="preload"> here made every signed-in page log
      "preloaded but not used"; injecting it from js/pages/login.js fixed that
@@ -35,6 +34,11 @@
     /* storage unavailable: skip the hint; the login page still works */
   }
 </script>
+<!-- Stylesheets AFTER the script above, deliberately: a browser holds an
+     inline script until every stylesheet above it has loaded, which delayed
+     the preload by the icon-font CSS's whole download. Stylesheet order is
+     unchanged (icons, then the app's own). -->
+<link rel="stylesheet" href="/_shared/fontawesome/7.3.1/css/all.min.css" />
 <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
