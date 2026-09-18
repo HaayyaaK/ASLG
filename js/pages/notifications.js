@@ -1,6 +1,6 @@
 import { t, getLang } from '../i18n.js';
 import { listNotificationsCached, markNotificationRead, markAllNotificationsRead } from '../api.js';
-import { formatDate, icon, toast, escapeHtml, isSmartNudge } from '../ui.js';
+import { formatDate, icon, toast, escapeHtml, isSmartNudge, makeKeyboardActivatable } from '../ui.js';
 import { printRecord, printButton } from '../print.js';
 
 export function destroy() {}
@@ -73,7 +73,7 @@ export async function render(container, user) {
         // copy understands the system sent it, not them.
         const isSmart = isSmartNudge(n);
         return `
-      <div class="hearing-row notif-row ${isSmart ? 'notif-smart' : ''}" data-notif-id="${n.id}" style="cursor:pointer;${n.is_read ? '' : 'background:var(--color-info-bg);border-radius:8px;padding-inline:12px;'}">
+      <div class="hearing-row notif-row ${isSmart ? 'notif-smart' : ''}" data-notif-id="${n.id}"${n.is_read ? '' : ' data-unread'} style="cursor:pointer;${n.is_read ? '' : 'background:var(--color-info-bg);border-radius:8px;padding-inline:12px;'}">
         <div class="hearing-info">
           ${isSmart ? `<div class="smart-tag">${icon('robot')} ${t('smart_followup')}</div>` : ''}
           <div style="font-weight:${n.is_read ? '500' : '700'};">${escapeHtml(getLang() === 'ar' ? n.message_ar : n.message_en)}</div>
@@ -85,6 +85,12 @@ export async function render(container, user) {
       .join('');
 
     listEl.querySelectorAll('[data-notif-id]').forEach((row) => {
+      // Unread rows are the actionable ones (click = mark read): make them
+      // reachable and operable by keyboard too, not only by mouse.
+      if (row.hasAttribute('data-unread')) {
+        makeKeyboardActivatable(row);
+        row.title = t('notif_mark_read_hint');
+      }
       row.addEventListener('click', async () => {
         try {
           await markNotificationRead(Number(row.getAttribute('data-notif-id')));

@@ -162,6 +162,23 @@ export function requiredNote() {
   return `<p class="required-note"><span class="req-star">*</span> ${t("required_field_note")}</p>`;
 }
 
+/**
+ * Makes an existing mouse click target keyboard-operable: focusable,
+ * announced as a button, and Enter/Space fire its existing click handler.
+ * For targets that hold block content and so can't just be a <button> (a
+ * notification row, an upload dropzone); anything that CAN be a <button>
+ * should be one instead.
+ */
+export function makeKeyboardActivatable(el) {
+  if (!el.hasAttribute("role")) el.setAttribute("role", "button");
+  el.tabIndex = 0;
+  el.addEventListener("keydown", (e) => {
+    if (e.target !== el || (e.key !== "Enter" && e.key !== " ")) return;
+    e.preventDefault();
+    el.click();
+  });
+}
+
 export function icon(name, extraClass = "") {
   return `<i class="fa-solid fa-${name} ${extraClass}"></i>`;
 }

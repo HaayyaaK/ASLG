@@ -291,9 +291,9 @@ export async function openCaseDetail(caseId, user) {
       <span class="badge badge-info">${c.case_number}/${c.case_year}</span>
       <span class="badge badge-muted">${lang === 'ar' ? c.court_name_ar : c.court_name_en}</span>
       <span class="badge badge-muted">${lawyerName(c) || '—'}</span>
-      <span class="watch-toggle ${c.is_watching ? 'active' : ''}" id="watch-toggle">
+      <button type="button" class="watch-toggle ${c.is_watching ? 'active' : ''}" id="watch-toggle">
         ${icon('bookmark', 'watch-icon')} <span id="watch-label">${c.is_watching ? t('watching') : t('watch_case')}</span>
-      </span>
+      </button>
       <span style="margin-inline-start:auto;">${printButton('case-print')}</span>
     </div>
     <p>${escapeHtml((lang === 'ar' ? c.summary_ar : c.summary_en) || '—')}</p>
@@ -347,9 +347,9 @@ export async function openCaseDetail(caseId, user) {
     ${
       canEdit
         ? `
-    <h4>${t('filter_status')}</h4>
+    <h4 id="stage-select-heading">${t('filter_status')}</h4>
     <div class="form-group" style="max-width:260px;">
-      <select id="stage-select">
+      <select id="stage-select" aria-labelledby="stage-select-heading">
         ${STAGES.map((s) => `<option value="${s}" ${s === c.stage ? 'selected' : ''}>${t('stage_' + s)}</option>`).join('')}
       </select>
     </div>`
@@ -364,7 +364,7 @@ export async function openCaseDetail(caseId, user) {
       canEdit
         ? `
     <div style="display:flex;gap:8px;margin-bottom:22px;">
-      <input id="note-input" placeholder="${t('add_note')}" style="flex:1;padding:11px 14px;border:1px solid var(--color-border);border-radius:6px;"/>
+      <input id="note-input" placeholder="${t('add_note')}" aria-label="${t('add_note')}" style="flex:1;padding:11px 14px;border:1px solid var(--color-border);border-radius:6px;"/>
       <button class="btn btn-primary" id="add-note-btn">${icon('paper-plane')} ${t('add_note')}</button>
     </div>`
         : ''

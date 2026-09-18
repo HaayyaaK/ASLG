@@ -3,7 +3,7 @@ import {
   listCases, listDocuments, uploadDocument, deleteDocument, reviewDocument, fetchDocumentBlobUrl,
   grantUploadAccess, myUploadAccess, getPermission,
 } from "../api.js";
-import { formatBytes, formatDate, openModal, closeModal, toast, escapeHtml, icon, routeFilter } from "../ui.js";
+import { formatBytes, formatDate, openModal, closeModal, toast, escapeHtml, icon, routeFilter, makeKeyboardActivatable } from "../ui.js";
 import { printRecord, printButton } from "../print.js";
 
 const ALLOWED_TYPES = ["pdf", "docx", "doc", "jpg", "jpeg", "png"];
@@ -159,6 +159,9 @@ export async function render(container, user) {
       await refreshAccordion();
       await renderClientAccessBanner();
     };
+    // The file input is `hidden`, so this dropzone is the only way to it:
+    // without this, a keyboard user could not upload at all.
+    makeKeyboardActivatable(dropzone);
     dropzone.addEventListener("click", () => fileInput.click());
     dropzone.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.classList.add("dragover"); });
     dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
@@ -421,6 +424,9 @@ function openUploadModal(caseId, caseLabel, onDone) {
   const fileInput = overlay.querySelector("#modal-file-input");
   const progressList = overlay.querySelector("#modal-upload-progress");
 
+  // The file input is `hidden`, so this dropzone is the only way to it:
+  // without this, a keyboard user could not upload at all.
+  makeKeyboardActivatable(dropzone);
   dropzone.addEventListener("click", () => fileInput.click());
   dropzone.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.classList.add("dragover"); });
   dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));

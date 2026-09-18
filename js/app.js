@@ -147,9 +147,9 @@ function renderShell(user) {
         <nav class="sidebar-nav" id="sidebar-nav">
           ${visibleRoutes
             .map(
-              (r) => `<div class="nav-item" data-route="${r.path}">
-              <span class="nav-icon">${icon(r.icon)}</span><span>${t(r.label)}</span>
-            </div>`
+              (r) => `<a class="nav-item" href="#/${r.path}" data-route="${r.path}">
+              <span class="nav-icon" aria-hidden="true">${icon(r.icon)}</span><span>${t(r.label)}</span>
+            </a>`
             )
             .join("")}
         </nav>
@@ -170,7 +170,7 @@ function renderShell(user) {
             <span class="label-full"></span><span class="label-short"></span>
           </div>
           <div class="topbar-actions">
-            <button class="icon-btn" id="lang-toggle" title="${t("lang_toggle")}">${icon("globe")}</button>
+            <button class="icon-btn" id="lang-toggle" title="${t("lang_toggle_label")}" aria-label="${t("lang_toggle_label")}">${icon("globe")}</button>
             <button class="icon-btn" id="notif-btn" title="${t("nav_notifications")}" aria-label="${t("nav_notifications")}">
               ${icon("bell")}<span class="icon-badge" id="notif-badge" style="display:none;"></span>
             </button>
@@ -200,17 +200,17 @@ function renderShell(user) {
           <div class="bottom-sheet-handle"></div>
           ${moreRoutes
             .map(
-              (r) => `<div class="bottom-sheet-item" data-route="${r.path}" data-close-sheet>
+              (r) => `<a class="bottom-sheet-item" href="#/${r.path}" data-route="${r.path}" data-close-sheet>
               ${icon(r.icon)} <span>${t(r.label)}</span>
-            </div>`
+            </a>`
             )
             .join("")}
-          <div class="bottom-sheet-item" id="sheet-lang-toggle" data-close-sheet>
-            ${icon("globe")} <span>${lang === "ar" ? "التبديل إلى الإنجليزية" : "Switch to Arabic"}</span>
-          </div>
-          <div class="bottom-sheet-item danger" id="sheet-logout" data-close-sheet>
+          <button type="button" class="bottom-sheet-item" id="sheet-lang-toggle" data-close-sheet>
+            ${icon("globe")} <span>${t("lang_toggle_label")}</span>
+          </button>
+          <button type="button" class="bottom-sheet-item danger" id="sheet-logout" data-close-sheet>
             ${icon("right-from-bracket")} <span>${t("logout")}</span>
-          </div>
+          </button>
         </div>
       </div>
     </div>
@@ -294,6 +294,13 @@ async function refreshNotifBadge() {
         el.style.display = "none";
       }
     });
+    // Both controls carry an aria-label, which overrides their content -- so
+    // the visible badge number was never announced. Put it in the name.
+    const name = unread > 0
+      ? `${t("nav_notifications")} — ${t("notif_unread_count").replace("{n}", unread)}`
+      : t("nav_notifications");
+    root.querySelector("#notif-btn")?.setAttribute("aria-label", name);
+    root.querySelector('#bottom-nav .bn-item[data-route="notifications"]')?.setAttribute("aria-label", name);
   } catch {
     // non-fatal: badge just stays hidden
   }
@@ -335,7 +342,11 @@ function handleRoute() {
   const target = allowed ? route : ROUTES.find((r) => getPermission(r.perm) !== "none");
 
   root.querySelectorAll("[data-route]").forEach((item) => {
-    item.classList.toggle("active", item.getAttribute("data-route") === target.path);
+    const isCurrent = item.getAttribute("data-route") === target.path;
+    item.classList.toggle("active", isCurrent);
+    // The "you are here" the .active styling shows, for assistive tech too.
+    if (isCurrent) item.setAttribute("aria-current", "page");
+    else item.removeAttribute("aria-current");
   });
   const titleEl = root.querySelector("#page-title");
   if (titleEl) {

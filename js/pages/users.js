@@ -180,7 +180,7 @@ export async function render(container, user) {
             .map(
               (u) => `
             <tr>
-              <td>${u.id === user.id ? '' : `<input type="checkbox" class="row-checkbox" data-id="${u.id}" ${selected.has(u.id) ? 'checked' : ''} aria-label="${userColLabel}: ${escapeHtml(lang === 'ar' ? u.name_ar : u.name_en)}"/>`}</td>
+              <td>${u.id === user.id ? '' : `<input type="checkbox" class="row-checkbox" name="selected-user" value="${u.id}" data-id="${u.id}" ${selected.has(u.id) ? 'checked' : ''} aria-label="${userColLabel}: ${escapeHtml(lang === 'ar' ? u.name_ar : u.name_en)}"/>`}</td>
               <td data-label="${userColLabel}" style="display:flex;align-items:center;gap:10px;">
                 ${roleAvatar(u, 'width:32px;height:32px;font-size:11px;')}
                 <div><b>${lang === 'ar' ? u.name_ar : u.name_en}</b><br><span class="text-muted" style="font-size:11.5px;">${u.username}</span></div>

@@ -929,9 +929,17 @@ a {
   margin-bottom: 4px;
   font-size: 13.5px;
   font-weight: 500;
+  /* Now an <a href> (was a <div>: not keyboard-reachable at all). */
+  text-decoration: none;
   transition:
     background 0.15s,
     color 0.15s;
+}
+/* On the dark sidebar the app's usual primary-light outline would be nearly
+   invisible (dark blue on dark blue); the light accent is high-contrast. */
+.nav-item:focus-visible {
+  outline: 2px solid var(--color-accent-light);
+  outline-offset: 2px;
 }
 .nav-item .nav-icon {
   width: 18px;
@@ -2602,9 +2610,26 @@ tbody tr:hover {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  /* Now a <button> (was a <span>: not keyboard-reachable). */
+  padding: 0;
+  background: none;
+  border: 0;
+  font-family: inherit;
+  color: inherit;
   cursor: pointer;
   font-size: 12.5px;
   font-weight: 600;
+}
+.watch-toggle:focus-visible {
+  outline: 2px solid var(--color-primary-light);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+/* Mouse targets made keyboard-operable via ui.js::makeKeyboardActivatable
+   (notification rows, upload dropzones). */
+[role="button"]:focus-visible {
+  outline: 2px solid var(--color-primary-light);
+  outline-offset: 2px;
 }
 .watch-toggle i {
   color: var(--color-text-muted);
@@ -2970,16 +2995,28 @@ tbody tr:hover {
   background: var(--color-border);
   margin: 6px auto 14px;
 }
+/* Route entries are <a href>, language/Logout are <button> (all were <div>s,
+   unreachable by keyboard): reset both to the same row look. */
 .bottom-sheet-item {
   display: flex;
   align-items: center;
   gap: 14px;
+  inline-size: 100%;
   padding: 13px 6px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+  font-family: inherit;
   font-size: 14px;
   font-weight: 600;
+  text-align: start;
+  text-decoration: none;
   color: var(--color-text);
-  border-bottom: 1px solid var(--color-border);
   cursor: pointer;
+}
+.bottom-sheet-item:focus-visible {
+  outline: 2px solid var(--color-primary-light);
+  outline-offset: -2px;
 }
 .bottom-sheet-item:last-child {
   border-bottom: none;

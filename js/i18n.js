@@ -173,6 +173,7 @@ const dict = {
     mark_all_read: 'تعليم الكل كمقروء',
     no_notifications: 'لا توجد تنبيهات',
     lang_toggle: 'EN',
+    lang_toggle_label: 'التبديل إلى الإنجليزية',
     more: 'المزيد',
     users_title: 'إدارة المستخدمين والصلاحيات',
     permissions: 'الصلاحيات',
@@ -504,6 +505,8 @@ const dict = {
     cases_hub_tabs_label: 'أقسام صفحة القضايا',
     hub_tab_refresh_hint: 'انقر للتحديث',
     notifications_hub_tabs_label: 'أقسام صفحة التنبيهات',
+    notif_unread_count: '{n} غير مقروءة',
+    notif_mark_read_hint: 'اضغط لتعليمه كمقروء',
   },
   en: {
     app_name: 'Al Saif Legal Group',
@@ -680,6 +683,7 @@ const dict = {
     mark_all_read: 'Mark all as read',
     no_notifications: 'No notifications',
     lang_toggle: 'AR',
+    lang_toggle_label: 'Switch to Arabic',
     more: 'More',
     users_title: 'Users & Permissions Management',
     permissions: 'Permissions',
@@ -1012,6 +1016,8 @@ const dict = {
     cases_hub_tabs_label: 'Cases page sections',
     hub_tab_refresh_hint: 'click to refresh',
     notifications_hub_tabs_label: 'Notifications page sections',
+    notif_unread_count: '{n} unread',
+    notif_mark_read_hint: 'Press to mark as read',
   },
 };
 
