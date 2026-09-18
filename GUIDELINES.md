@@ -417,7 +417,7 @@ fill in the form. Starred fields are required:
 | Category (Arabic) / Category (English) | No | |
 | Parties (English) | No | |
 | Civil ID | No | |
-| Assigned Lawyer (optional) | No | Choose *None* to leave unassigned |
+| Assigned Lawyer (optional) | No | Lists Lawyers only. Leave it on *Choose a lawyer…* to create the case unassigned |
 | Summary (Arabic) / Summary (English) | No | |
 | Next Hearing Date (optional) | No | Kuwait local time |
 | **Initial Stage** \* | Yes | Usually *New* |

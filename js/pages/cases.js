@@ -813,9 +813,14 @@ async function openNewCaseForm(onCreated) {
       <div class="form-group"><label>${t('parties_en')}</label><input id="f-parties-en"/></div>
       <div class="form-group">
         <label>${t('assigned_lawyer_optional')}</label>
+        <!-- listCaseLawyers() is already restricted server-side to active
+             users with role Lawyer (routers/cases.py::list_case_lawyers),
+             and create_case rejects any other id. The placeholder replaces
+             the old "None" choice: still optional (left unchosen = no
+             assigned lawyer), but no longer a pickable fake lawyer. -->
         <select id="f-lawyer">
-          <option value="">${t('none_option')}</option>
-          ${lawyers.map((u) => `<option value="${u.id}">${lang === 'ar' ? u.name_ar : u.name_en}</option>`).join('')}
+          <option value="" disabled selected>${t('choose_lawyer')}</option>
+          ${lawyers.map((u) => `<option value="${u.id}">${escapeHtml(lang === 'ar' ? u.name_ar : u.name_en)}</option>`).join('')}
         </select>
       </div>
       <div class="form-group">
