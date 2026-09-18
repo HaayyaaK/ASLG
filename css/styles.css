@@ -732,11 +732,12 @@ a {
   transform: translateY(1px);
 }
 .btn:focus-visible {
-  /* Shared across every .btn variant — reuses the same focus-ring language
-     already used on form inputs, so keyboard focus is visible consistently
-     app-wide rather than only on the one button this was added for. */
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(28, 74, 130, 0.25);
+  /* Shared across every .btn variant. A solid primary-light outline (~8:1
+     on the page background), not the former 3px 25%-alpha box-shadow, which
+     blended to ~1.5:1 -- under WCAG 1.4.11's 3:1 for a focus indicator. The
+     same outline every interactive component in the app now uses (KI-4). */
+  outline: 2px solid var(--color-primary-light);
+  outline-offset: 2px;
 }
 /* ---- The app's two required button variants: Primary and Secondary ----
    Every :hover/:focus-visible/:active/:disabled state either variant needs
@@ -1235,8 +1236,8 @@ a {
   color: var(--color-text);
 }
 .qcp-chip:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(28, 74, 130, 0.25);
+  outline: 2px solid var(--color-primary-light);
+  outline-offset: 2px;
 }
 .qcp-chip.active {
   color: var(--color-primary);
@@ -1286,8 +1287,8 @@ a {
   transform: translateY(-1px);
 }
 .qcp-tile:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(28, 74, 130, 0.25);
+  outline: 2px solid var(--color-primary-light);
+  outline-offset: 2px;
 }
 .qcp-avatar {
   flex-shrink: 0;
@@ -1518,8 +1519,8 @@ a {
   background: var(--surface-sunken);
 }
 .astream-row.astream-clickable:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(28, 74, 130, 0.25);
+  outline: 2px solid var(--color-primary-light);
+  outline-offset: 2px;
 }
 .astream-row.astream-overdue {
   background: var(--danger-bg);
@@ -1652,8 +1653,8 @@ a {
   background: var(--surface-sunken);
 }
 .watched-rail-item:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(28, 74, 130, 0.25);
+  outline: 2px solid var(--color-primary-light);
+  outline-offset: 2px;
 }
 .watched-rail-num {
   font-size: var(--text-sm);
@@ -2388,8 +2389,8 @@ tbody tr:hover {
   cursor: pointer;
 }
 .doc-case-toggle:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(28, 74, 130, 0.25);
+  outline: 2px solid var(--color-primary-light);
+  outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
 .doc-case-chevron {

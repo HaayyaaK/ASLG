@@ -91,7 +91,12 @@ always ends with already covers it.
 
 ---
 
-## KI-4 — Focus rings below WCAG 1.4.11 contrast on six components
+## KI-4 — Focus rings below WCAG 1.4.11 contrast on six components — **RESOLVED**
+
+> **Resolved** in commit `fix(a11y): consistent high-contrast focus ring across
+> all interactive elements`: all six rules below now use the outline from the
+> "Fix" paragraph; `rgba(28, 74, 130, 0.25)` no longer appears in
+> `css/styles.css`. Kept here for the record.
 
 | | |
 |---|---|
