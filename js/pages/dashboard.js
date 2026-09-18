@@ -100,22 +100,20 @@ export async function render(container, user) {
       ${[1, 2, 3, 4].map(() => `<div class="stat-card"><div class="text-muted">${icon("spinner", "fa-spin")}</div></div>`).join("")}
     </div>` : ""}
 
-    <div class="dash-grid">
-      <div class="dash-col-main">
-        <div class="panel">
-          <div class="panel-header"><h3>${t("upcoming_hearings")}</h3></div>
-          <div class="panel-body" id="upcoming-hearings-list"></div>
-        </div>
-        ${actionStreamSkeleton()}
-      </div>
-      <div class="dash-col-side">
+    <div class="dash-rows">
+      <div class="${showTaskStats ? "dash-row-split" : "dash-row"}">
         ${showTaskStats ? myWeekSkeleton() : ""}
         <div class="panel" id="watched-rail-panel">
           <div class="panel-header"><h3>${icon("bookmark")} ${t("watched_title")}</h3></div>
           <div class="panel-body" id="watched-rail-body"><p class="text-muted mt-0">${icon("spinner", "fa-spin")}</p></div>
         </div>
-        ${usefulWebsitesPanel()}
       </div>
+      ${usefulWebsitesPanel()}
+      <div class="panel">
+        <div class="panel-header"><h3>${t("upcoming_hearings")}</h3></div>
+        <div class="panel-body" id="upcoming-hearings-list"></div>
+      </div>
+      ${actionStreamSkeleton()}
     </div>
   `;
 

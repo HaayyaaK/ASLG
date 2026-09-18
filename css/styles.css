@@ -1316,46 +1316,33 @@ a {
 }
 
 /* =====================================================================
-   Dashboard upgrade (Sub-phase 3.4, Sept 2026 overhaul) — 2-column,
-   priority-first widget area. Stat grids and the Quick Case Access panel
-   above stay full-width (unchanged position); everything new lives in this
-   grid. Logical (inline-start/end) properties throughout so RTL mirrors
-   with no separate rule, matching every other section in this file.
+   Dashboard panel rows (Sub-phase 3.4, restructured on review). Replaces
+   the earlier 2fr/1fr two-column grid: every panel below the stat grids
+   is now a full-width row, except My Week + Watched Cases, which share one
+   row 50/50. Rows stack in a single-column grid so every gap -- between
+   rows and inside the split row -- is the same token, and no row can be
+   stretched to match another's height.
    ===================================================================== */
-.dash-grid {
+.dash-rows,
+.dash-row {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
-  /* start, not stretch: with removed/added widgets making the two columns
-     genuinely different lengths, the shorter one must end at its own
-     content height and leave trailing page background below it -- never
-     stretch a panel to fill the difference. align-content is the same
-     instruction for the grid's own track sizing, in case an ancestor ever
-     gives .dash-grid more block-size than its content needs. */
   align-items: start;
-  align-content: start;
 }
-.dash-col-main,
-.dash-col-side {
-  display: flex;
-  flex-direction: column;
+.dash-row-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4);
-  min-width: 0;
+  /* stretch, not start: two cards sharing one row read as a pair only if
+     they end together. With start, the shorter card (usually My Week)
+     left a hole of bare page background under it before the next
+     full-width row -- the "empty gap" the layout review ruled out. */
+  align-items: stretch;
 }
-/* Below tablet width there isn't room for two columns of real content —
-   collapse to one, main content first (it's the higher-priority column). */
-@media (max-width: 1024px) {
-  .dash-grid {
-    grid-template-columns: 1fr;
-  }
-}
-/* Wide-desktop / 4K (see the breakpoint reference in :root above): give the
-   side column a bit more room rather than stretching the main column's
-   already-capped-width content into empty space. */
-@media (min-width: 1680px) {
-  .dash-grid {
-    grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
-    gap: var(--space-8);
+@media (max-width: 768px) {
+  .dash-row-split {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

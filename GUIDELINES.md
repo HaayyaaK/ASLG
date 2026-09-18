@@ -312,10 +312,10 @@ If there is nothing urgent, the panel says **"No urgent hearings"**.
 
 ### Useful Kuwait Websites
 
-Below Critical Upcoming Hearings is the **Useful Kuwait Websites** panel —
-direct links to official Kuwaiti authorities, each with a cover image so the
-site is recognizable at a glance. They open in a new tab, so you do not lose
-your place.
+Above Critical Upcoming Hearings is the **Useful Kuwait Websites** panel —
+direct links to official Kuwaiti authorities, shown as buttons in the same
+style as the Quick Actions row. Hover over one to see what the site offers.
+They open in a new tab, so you do not lose your place.
 
 | Website | Address | What it offers | Why it helps |
 |---|---|---|---|
@@ -329,9 +329,11 @@ this system. ASLG does not control their availability or their content.
 
 ### Quick Actions, Action Stream, and the other new Dashboard widgets
 
-Below the boxes, the Dashboard is arranged as a wide main area and a narrower
-side column (on a phone or narrow tablet, the side column simply moves below
-the main one — nothing is hidden).
+Below the boxes, the Dashboard shows, from top to bottom: **My Week** and
+**Watched Cases** side by side, then **Useful Kuwait Websites**, then
+**Critical Upcoming Hearings**, then the **Action Stream** — each across the
+full width of the page. On a phone, My Week and Watched Cases stack one
+above the other instead; nothing is hidden.
 
 **Quick Actions** — a row of buttons, right below the page title. You only
 ever see the ones your role can use:
