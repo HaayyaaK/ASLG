@@ -190,42 +190,47 @@ export const bulkUserAction = (userIds, action, newPassword) => request("/users/
 export const listCases = () => request("/cases");
 
 /**
- * listCases() behind a short shared cache.
+ * Short shared caches for the lists the hub pages' tabs load (cases,
+ * notifications, reminders).
  *
- * The Cases page's two tabs both need the case list (My Cases for the table,
- * Official Search Engine for its Official Sync case picker), and the search
- * tab used to re-request it on every one of its five sub-tab clicks. Callers
- * now share one in-flight promise and reuse a result younger than maxAgeMs.
+ * Callers of the same list share one in-flight promise and reuse a result
+ * younger than 60s -- e.g. the Cases page's two tabs both need the case list,
+ * and the search tab used to re-request it on every one of its five sub-tab
+ * clicks. Clicking a hub tab invalidates its lists explicitly (see
+ * js/hub.js), so the cache only ever serves programmatic navigation.
  *
  * Staleness is bounded two ways: the age limit, and invalidation on every
- * case-list-changing call below (create, stage, watch/track) -- so a user
- * never sees a stale result of their own action, only up to 60s of other
- * people's. A failed request is dropped from the cache so the next caller
- * retries instead of inheriting the error.
+ * call below that changes a cached list -- so a user never sees a stale
+ * result of their own action, only up to 60s of other people's. A failed
+ * request is dropped from the cache so the next caller retries instead of
+ * inheriting the error.
  */
-const CASES_CACHE_MAX_AGE_MS = 60000;
-let casesCache = null;
+const LIST_CACHE_MAX_AGE_MS = 60000;
+const listCaches = new Map();
 
-export function listCasesCached({ maxAgeMs = CASES_CACHE_MAX_AGE_MS } = {}) {
-  if (!casesCache || Date.now() - casesCache.at > maxAgeMs) {
-    const promise = listCases();
-    casesCache = { at: Date.now(), promise };
-    promise.catch(() => {
-      if (casesCache?.promise === promise) casesCache = null;
-    });
-  }
-  return casesCache.promise;
+function cachedList(key, fetcher) {
+  const entry = listCaches.get(key);
+  if (entry && Date.now() - entry.at <= LIST_CACHE_MAX_AGE_MS) return entry.promise;
+  const promise = fetcher();
+  listCaches.set(key, { at: Date.now(), promise });
+  promise.catch(() => {
+    if (listCaches.get(key)?.promise === promise) listCaches.delete(key);
+  });
+  return promise;
 }
 
-export function invalidateCasesCache() {
-  casesCache = null;
+export function invalidateListCache(...keys) {
+  keys.forEach((k) => listCaches.delete(k));
 }
 
-async function invalidatingCases(promise) {
+async function invalidating(keys, promise) {
   const result = await promise;
-  invalidateCasesCache();
+  invalidateListCache(...keys);
   return result;
 }
+
+export const listCasesCached = () => cachedList("cases", listCases);
+const invalidatingCases = (promise) => invalidating(["cases"], promise);
 
 export const getCase = (id) => request(`/cases/${id}`);
 export const createCase = (payload) => invalidatingCases(request("/cases", { method: "POST", body: payload }));

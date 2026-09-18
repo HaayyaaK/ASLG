@@ -50,8 +50,9 @@ tab selection unchanged.
   actually reached the page (4 of 4, including at 0.3s after reload — the
   timing that failed earlier), the tab switched correctly.
 - The 3 failed trials were exactly the ones with no delivery confirmation.
-- There is no code path that can drop the key: `js/pages/cases-hub.js`
-  creates the tab buttons and attaches their `keydown` listener in the same
+- There is no code path that can drop the key: the hub (`js/hub.js`, which
+  `js/pages/cases-hub.js` is built on) creates the tab buttons and attaches
+  their `keydown` listener in the same
   synchronous block, so a tab can never be focusable before its listener
   exists.
 

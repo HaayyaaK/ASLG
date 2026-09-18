@@ -38,6 +38,20 @@ let activeTab = "case_number";
 
 export function destroy() {}
 
+/**
+ * Reload in place for the Cases hub's tab-click refresh (js/hub.js), keeping
+ * what the user typed: tracked state is re-read, the current sub-tab's search
+ * is re-run with the same criteria if one had been run, and the Official Sync
+ * panel re-reads its lists. A full render() would wipe the inputs.
+ */
+export async function refresh(container, user) {
+  await loadTracked();
+  const content = container.querySelector("#search-tab-content");
+  const hasResults = content?.querySelector(".table-wrap table, .table-wrap .empty-state");
+  if (hasResults) content.querySelector("#btn-search")?.click();
+  if (getPermission("official_sync") !== "none") await wireOfficialSyncPanel(container);
+}
+
 export async function render(container, user) {
   // Tracked state is needed before any result renders, so the Track button
   // tells the truth on first paint rather than after a click.

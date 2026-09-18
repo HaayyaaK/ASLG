@@ -502,8 +502,7 @@ const dict = {
     // --- Cases page tabs (Merge A) ---
     cases_tab_mine: 'قضاياي',
     cases_hub_tabs_label: 'أقسام صفحة القضايا',
-    cases_hub_refresh: 'تحديث',
-    cases_hub_refresh_hint: 'إعادة تحميل قائمة القضايا من الخادم',
+    hub_tab_refresh_hint: 'انقر للتحديث',
   },
   en: {
     app_name: 'Al Saif Legal Group',
@@ -1010,8 +1009,7 @@ const dict = {
     // --- Cases page tabs (Merge A) ---
     cases_tab_mine: 'My Cases',
     cases_hub_tabs_label: 'Cases page sections',
-    cases_hub_refresh: 'Refresh',
-    cases_hub_refresh_hint: 'Reload the case list from the server',
+    hub_tab_refresh_hint: 'click to refresh',
   },
 };
 

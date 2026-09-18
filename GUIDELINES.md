@@ -381,9 +381,11 @@ it.
 them at all. Switching between the two tabs keeps your place in each: a search
 you ran is still there when you come back to it.
 
-**Refresh** (beside the tabs) reloads the case list from the server. You rarely
-need it: the list already refreshes itself after anything you change, and is at
-most a minute behind changes colleagues make.
+**To refresh a tab, click it** — even if you are already on it. It reloads that
+tab from the server (a small spinner shows on the tab while it does) without
+clearing what you typed: on Official Search Engine, your last search runs again.
+You rarely need it: the list already refreshes itself after anything you change,
+and is at most a minute behind changes colleagues make.
 
 Old bookmarks to the Official Search Engine still work — they open this page on
 the Official Search Engine tab.

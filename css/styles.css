@@ -1988,6 +1988,18 @@ a {
   color: var(--text-on-dark);
   box-shadow: var(--shadow-sm);
 }
+/* Tab-click refresh in progress (js/hub.js swaps the tab's icon for a
+   spinner). Deliberately no dimming: fading the selected tab would drop its
+   white-on-primary contrast mid-load. fa-spin already stops under
+   prefers-reduced-motion in Font Awesome's own stylesheet. */
+.hub-tab.is-loading {
+  cursor: progress;
+}
+.hub-tab-icon {
+  display: inline-flex;
+  inline-size: 1.1em;
+  justify-content: center;
+}
 /* An outline offset clear of the tab, rather than a box-shadow, so it can't
    be confused with (or hidden by) the selected tab's own fill and shadow.
    primary-light, not the accent gold: gold on --surface-sunken is ~2.3:1. */
