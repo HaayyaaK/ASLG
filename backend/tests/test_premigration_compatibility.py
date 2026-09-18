@@ -83,6 +83,7 @@ def test_create_case_works_against_the_live_premigration_schema(premigration_cli
         "case_number": "9999", "automated_number": "202609999", "case_year": 2026,
         "court_id": base_data["court"].id,
         "parties_ar": "طرف تجريبي", "stage": "new",
+        "assigned_lawyer_id": base_data["lawyer"].id,
     })
     assert resp.status_code == 201, resp.text
     assert resp.json()["case_number"] == "9999"

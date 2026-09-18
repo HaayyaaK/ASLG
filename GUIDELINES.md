@@ -417,7 +417,7 @@ fill in the form. Starred fields are required:
 | Category (Arabic) / Category (English) | No | |
 | Parties (English) | No | |
 | Civil ID | No | |
-| Assigned Lawyer (optional) | No | Lists Lawyers only. Leave it on *Choose a lawyer…* to create the case unassigned |
+| **Assigned Lawyer** \* | Yes | Lists Lawyers only. Every new case must have one — it is the person who owns the case, receives its hearing alerts and can be given its tasks. Saving without one shows **"Choose an assigned lawyer"** |
 | Summary (Arabic) / Summary (English) | No | |
 | Next Hearing Date (optional) | No | Kuwait local time |
 | **Initial Stage** \* | Yes | Usually *New* |

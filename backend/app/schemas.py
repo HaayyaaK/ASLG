@@ -164,7 +164,11 @@ class CaseCreateRequest(BaseModel):
     parties_ar: str
     parties_en: str | None = None
     civil_id: str | None = None
-    assigned_lawyer_id: int | None = None
+    # Required on NEW cases: a case with no assigned lawyer has nobody who
+    # owns its workflow, receives its hearing alerts, or can carry its tasks.
+    # Missing or null -> 422 from validation, before the handler runs.
+    # Existing cases created before this rule keep whatever they have.
+    assigned_lawyer_id: int
     summary_ar: str | None = None
     summary_en: str | None = None
     stage: str = "new"

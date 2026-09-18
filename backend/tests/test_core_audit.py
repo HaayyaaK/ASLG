@@ -167,9 +167,12 @@ def test_client_sees_only_their_own_cases(api):
 def test_client_cannot_create_or_modify_a_case(api):
     tc, base_data, db = api
     _as(base_data["client"])
+    # A complete, valid body, so the request reaches the permission check
+    # this test is about -- an incomplete one would stop at 422 first.
     created = tc.post("/api/cases", json={
         "case_number": "6666", "automated_number": "202606666", "case_year": 2026,
         "court_id": base_data["court"].id, "parties_ar": "x",
+        "assigned_lawyer_id": base_data["lawyer"].id,
     })
     staged = tc.put(f"/api/cases/{base_data['case'].id}/stage", json={"stage": "closed"})
     assert created.status_code == 403
@@ -187,6 +190,7 @@ def test_case_create_read_update_flow(api):
         "case_number": "4242", "automated_number": "202604242", "case_year": 2026,
         "court_id": base_data["court"].id,
         "parties_ar": "أ ضد ب", "parties_en": "A v B", "stage": "new",
+        "assigned_lawyer_id": base_data["lawyer"].id,
     })
     assert created.status_code == 201
     case_id = created.json()["id"]
@@ -212,9 +216,41 @@ def test_duplicate_case_number_year_is_rejected(api):
     payload = {
         "case_number": "5150", "automated_number": "202605150", "case_year": 2026,
         "court_id": base_data["court"].id, "parties_ar": "x",
+        "assigned_lawyer_id": base_data["lawyer"].id,
     }
     assert tc.post("/api/cases", json=payload).status_code == 201
     assert tc.post("/api/cases", json=payload).status_code == 409
+
+
+def _new_case_body(base_data, case_number, **extra):
+    body = {
+        "case_number": case_number, "automated_number": f"2026{int(case_number):05d}", "case_year": 2026,
+        "court_id": base_data["court"].id, "parties_ar": "x",
+    }
+    body.update(extra)
+    return body
+
+
+def test_new_case_requires_an_assigned_lawyer(api):
+    tc, base_data, db = api
+    _as(base_data["admin"])
+    missing = tc.post("/api/cases", json=_new_case_body(base_data, "7101"))
+    null = tc.post("/api/cases", json=_new_case_body(base_data, "7102", assigned_lawyer_id=None))
+    assert missing.status_code == 422
+    assert null.status_code == 422
+    assert any(e["loc"][-1] == "assigned_lawyer_id" for e in missing.json()["detail"])
+
+
+def test_new_case_lawyer_must_be_an_active_lawyer(api):
+    tc, base_data, db = api
+    _as(base_data["admin"])
+    not_a_lawyer = tc.post("/api/cases", json=_new_case_body(base_data, "7201", assigned_lawyer_id=base_data["admin"].id))
+    assert not_a_lawyer.status_code == 400
+
+    base_data["lawyer"].is_active = False
+    db.commit()
+    inactive = tc.post("/api/cases", json=_new_case_body(base_data, "7202", assigned_lawyer_id=base_data["lawyer"].id))
+    assert inactive.status_code == 400
 
 
 def test_closing_a_case_also_closes_its_status(api):

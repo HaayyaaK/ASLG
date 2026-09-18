@@ -58,6 +58,7 @@ def _payload(base_data, **overrides):
         "automated_number": "202699999",
         "court_id": base_data["court"].id,
         "parties_ar": "طرف أ ضد طرف ب",
+        "assigned_lawyer_id": base_data["lawyer"].id,
         "stage": "new",
     }
     body.update(overrides)

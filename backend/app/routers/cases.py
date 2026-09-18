@@ -129,10 +129,12 @@ def create_case(payload: CaseCreateRequest, user: User = Depends(get_current_use
     if court is None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid court")
 
-    if payload.assigned_lawyer_id is not None:
-        lawyer = db.get(User, payload.assigned_lawyer_id)
-        if lawyer is None or lawyer.role.code != "Lawyer":
-            raise HTTPException(status.HTTP_400_BAD_REQUEST, "assigned_lawyer_id must reference an active Lawyer")
+    # Always present now (CaseCreateRequest makes it required). The active
+    # check makes this match its own message: it used to accept a
+    # deactivated lawyer, which the New Case dropdown never offers.
+    lawyer = db.get(User, payload.assigned_lawyer_id)
+    if lawyer is None or lawyer.role.code != "Lawyer" or not lawyer.is_active:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "assigned_lawyer_id must reference an active Lawyer")
 
     if payload.stage not in STAGES:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Invalid stage '{payload.stage}'")

@@ -693,7 +693,8 @@ a {
   margin-top: 4px;
   display: none;
 }
-.form-group.invalid input {
+.form-group.invalid input,
+.form-group.invalid select {
   border-color: var(--color-danger);
 }
 .form-group.invalid .field-error {

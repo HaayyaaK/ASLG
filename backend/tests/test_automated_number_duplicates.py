@@ -50,6 +50,7 @@ def _payload(base_data, case_number, automated_number, case_year=None):
         "automated_number": automated_number,
         "court_id": base_data["court"].id,
         "parties_ar": "طرف أ ضد طرف ب",
+        "assigned_lawyer_id": base_data["lawyer"].id,
         "stage": "new",
     }
     if case_year is not None:

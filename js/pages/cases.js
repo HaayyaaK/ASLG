@@ -812,16 +812,17 @@ async function openNewCaseForm(onCreated) {
       <div class="form-group"><label class="required">${t('parties_ar')}</label><input id="f-parties-ar" aria-required="true"/></div>
       <div class="form-group"><label>${t('parties_en')}</label><input id="f-parties-en"/></div>
       <div class="form-group">
-        <label>${t('assigned_lawyer_optional')}</label>
-        <!-- listCaseLawyers() is already restricted server-side to active
-             users with role Lawyer (routers/cases.py::list_case_lawyers),
-             and create_case rejects any other id. The placeholder replaces
-             the old "None" choice: still optional (left unchosen = no
-             assigned lawyer), but no longer a pickable fake lawyer. -->
-        <select id="f-lawyer">
+        <label class="required">${t('assigned_lawyer')}</label>
+        <!-- Required (a new case must have an owner). listCaseLawyers() is
+             restricted server-side to active users with role Lawyer
+             (routers/cases.py::list_case_lawyers), and create_case rejects a
+             missing id with 422 and any non-Lawyer / inactive id with 400.
+             The disabled placeholder is the unchosen state. -->
+        <select id="f-lawyer" aria-required="true" required>
           <option value="" disabled selected>${t('choose_lawyer')}</option>
           ${lawyers.map((u) => `<option value="${u.id}">${escapeHtml(lang === 'ar' ? u.name_ar : u.name_en)}</option>`).join('')}
         </select>
+        <div class="field-error">${t('assigned_lawyer_required')}</div>
       </div>
       <div class="form-group">
         <label>${t('initial_stage')}</label>
@@ -881,6 +882,9 @@ async function openNewCaseForm(onCreated) {
     return parsed;
   }
 
+  overlay.querySelector('#f-lawyer').addEventListener('change', (e) => {
+    e.target.closest('.form-group').classList.remove('invalid');
+  });
   autoEl.addEventListener('input', () => refreshAutomatedNumberFeedback({ markInvalid: false }));
   autoEl.addEventListener('blur', () => refreshAutomatedNumberFeedback({ markInvalid: true }));
 
@@ -902,8 +906,17 @@ async function openNewCaseForm(onCreated) {
       autoEl.focus();
       return;
     }
+    // Its own message rather than the generic "required": the field is a
+    // choice the user may not realise is now mandatory.
+    const lawyerSelect = overlay.querySelector('#f-lawyer');
+    const lawyerId = lawyerSelect.value;
+    if (!lawyerId) {
+      lawyerSelect.closest('.form-group').classList.add('invalid');
+      toast(t('assigned_lawyer_required'), 'error');
+      lawyerSelect.focus();
+      return;
+    }
     const nextHearing = overlay.querySelector('#f-next-hearing').value;
-    const lawyerId = overlay.querySelector('#f-lawyer').value;
     try {
       await createCase({
         case_number: caseNumber,
@@ -919,7 +932,7 @@ async function openNewCaseForm(onCreated) {
         parties_ar: partiesAr,
         parties_en: overlay.querySelector('#f-parties-en').value.trim() || null,
         civil_id: overlay.querySelector('#f-civil-id').value.trim() || null,
-        assigned_lawyer_id: lawyerId ? Number(lawyerId) : null,
+        assigned_lawyer_id: Number(lawyerId),
         summary_ar: overlay.querySelector('#f-summary-ar').value.trim() || null,
         summary_en: overlay.querySelector('#f-summary-en').value.trim() || null,
         stage: overlay.querySelector('#f-stage').value,
