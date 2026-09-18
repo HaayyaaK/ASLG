@@ -5,8 +5,7 @@ import { icon, brandMark, roleAvatar, toast, escapeHtml } from "./ui.js";
 import { startIdleTimer, stopIdleTimer } from "./idle.js";
 import * as loginPage from "./pages/login.js";
 import * as dashboardPage from "./pages/dashboard.js";
-import * as searchPage from "./pages/search.js";
-import * as casesPage from "./pages/cases.js";
+import * as casesHubPage from "./pages/cases-hub.js";
 import * as documentsPage from "./pages/documents.js";
 import * as notificationsPage from "./pages/notifications.js";
 import * as remindersPage from "./pages/reminders.js";
@@ -17,8 +16,10 @@ import * as adminRulesPage from "./pages/admin-rules.js";
 
 const ROUTES = [
   { path: "dashboard", perm: "dashboard", icon: "house", label: "nav_dashboard", shortLabel: "nav_dashboard_short", page: dashboardPage },
-  { path: "search", perm: "search", icon: "magnifying-glass", label: "nav_search", shortLabel: "nav_search_short", page: searchPage },
-  { path: "cases", perm: "cases", icon: "folder-open", label: "nav_cases", shortLabel: "nav_cases", page: casesPage },
+  // One entry for both "My Cases" and "Official Search Engine" -- they are
+  // tabs inside js/pages/cases-hub.js. Old #/search links are rewritten by
+  // ROUTE_ALIASES below.
+  { path: "cases", perm: "cases", icon: "folder-open", label: "nav_cases", shortLabel: "nav_cases", page: casesHubPage },
   { path: "documents", perm: "documents", icon: "file-lines", label: "nav_documents", shortLabel: "nav_documents_short", page: documentsPage },
   { path: "reminders", perm: "reminders", icon: "clock-rotate-left", label: "nav_reminders", shortLabel: "nav_reminders_short", page: remindersPage },
   { path: "deadlines", perm: "deadlines", icon: "hourglass-half", label: "nav_deadlines", shortLabel: "nav_deadlines_short", page: deadlinesPage },
@@ -293,10 +294,30 @@ async function refreshNotifBadge() {
   }
 }
 
+/**
+ * Routes that no longer exist as pages, mapped to where their content lives
+ * now, so bookmarks and old in-app links keep working. Each entry receives
+ * the path segments after the old route name and returns the new path.
+ */
+const ROUTE_ALIASES = {
+  search: () => "cases/search",
+};
+
+/** Rewrites an aliased hash in place. replaceState, not a hash assignment:
+ *  it adds no history entry (Back skips the dead URL instead of bouncing
+ *  off it) and fires no second hashchange, so routing continues in this
+ *  same call with the rewritten hash. */
+function resolveRouteAlias() {
+  const [head, ...rest] = location.hash.replace(/^#\//, "").split("/");
+  const alias = ROUTE_ALIASES[head];
+  if (alias) history.replaceState(null, "", `#/${alias(rest)}`);
+}
+
 function handleRoute() {
   const user = getCurrentUser();
   if (!user) { renderLogin(); return; }
 
+  resolveRouteAlias();
   const path = currentRoutePath();
   const route = ROUTES.find((r) => r.path === path) || ROUTES[0];
   const allowed = getPermission(route.perm) !== "none";

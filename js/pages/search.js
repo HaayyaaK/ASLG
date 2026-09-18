@@ -1,5 +1,5 @@
 import { t, getLang } from "../i18n.js";
-import { searchCaseNumber, searchSessions, searchExperts, searchExecution, searchInternal, importRecord, listTracked, untrackCase, listCases, listOfficialSources, recordOfficialCheck, listProcedureTypes, getPermission } from "../api.js";
+import { searchCaseNumber, searchSessions, searchExperts, searchExecution, searchInternal, importRecord, listTracked, untrackCase, listCasesCached, listOfficialSources, recordOfficialCheck, listProcedureTypes, getPermission } from "../api.js";
 import { formatDate, toast, escapeHtml, icon, formatNumber } from "../ui.js";
 import { openCaseDetail } from "./cases.js";
 import { previewDocument } from "./documents.js";
@@ -106,7 +106,9 @@ async function wireOfficialSyncPanel(container) {
   let cases = [];
   let sources = [];
   try {
-    [cases, sources] = await Promise.all([listCases(), listOfficialSources()]);
+    // Cached: this panel re-renders on every sub-tab click above, and the
+    // My Cases tab beside this one needs the same list.
+    [cases, sources] = await Promise.all([listCasesCached(), listOfficialSources()]);
   } catch (err) {
     body.innerHTML = `<p class="text-muted">${escapeHtml(err.message)}</p>`;
     return;
@@ -376,10 +378,10 @@ function renderCaseNumberTab(root, user) {
       <div class="form-group"><label>${t("case_number")}</label><input id="f-num" placeholder="0000"/></div>
       <div class="form-group"><label>${t("automated_number")}</label><input id="f-auto" inputmode="numeric" placeholder="${lang === "ar" ? "مثال: 202400001" : "e.g. 202400001"}"/></div>
       <div class="form-group"><label>${t("party_civil_id")}</label><input id="f-party" placeholder="${lang === "ar" ? "اسم أو رقم مدني" : "Name or Civil ID"}"/></div>
-    </div>
-    <div class="search-actions">
-      <button class="btn btn-primary" id="btn-search">${icon("magnifying-glass")} ${t("search_btn")}</button>
-      <button class="btn btn-outline" id="btn-reset">${t("reset_btn")}</button>
+      <div class="search-actions">
+        <button class="btn btn-primary" id="btn-search">${icon("magnifying-glass")} ${t("search_btn")}</button>
+        <button class="btn btn-outline" id="btn-reset">${t("reset_btn")}</button>
+      </div>
     </div>
     <div style="margin-top:22px;">
       ${resultsHead("case-print-slot")}
@@ -477,10 +479,10 @@ function renderSessionsTab(root, user) {
       <div class="form-group"><label>${t("circuit")}</label><input id="f-circuit" placeholder="${lang === "ar" ? "رقم أو اسم الدائرة" : "Circuit name/number"}"/></div>
       <div class="form-group"><label>${t("session_date")}</label><input id="f-date" type="date"/></div>
       <div class="form-group"><label>${t("case_number")}</label><input id="f-casenum"/></div>
-    </div>
-    <div class="search-actions">
-      <button class="btn btn-primary" id="btn-search">${icon("magnifying-glass")} ${t("search_btn")}</button>
-      <button class="btn btn-outline" id="btn-reset">${t("reset_btn")}</button>
+      <div class="search-actions">
+        <button class="btn btn-primary" id="btn-search">${icon("magnifying-glass")} ${t("search_btn")}</button>
+        <button class="btn btn-outline" id="btn-reset">${t("reset_btn")}</button>
+      </div>
     </div>
     <div style="margin-top:22px;">${resultsHead("sess-print-slot")}${resultsShell("sess-results")}</div>`;
 
@@ -569,10 +571,10 @@ function renderExpertsTab(root, user) {
       <div class="form-group"><label>${t("expert_file_no")}</label><input id="f-fileno"/></div>
       <div class="form-group"><label>${t("expert_name")}</label><input id="f-name"/></div>
       <div class="form-group"><label>${t("case_number")}</label><input id="f-casenum"/></div>
-    </div>
-    <div class="search-actions">
-      <button class="btn btn-primary" id="btn-search">${icon("magnifying-glass")} ${t("search_btn")}</button>
-      <button class="btn btn-outline" id="btn-reset">${t("reset_btn")}</button>
+      <div class="search-actions">
+        <button class="btn btn-primary" id="btn-search">${icon("magnifying-glass")} ${t("search_btn")}</button>
+        <button class="btn btn-outline" id="btn-reset">${t("reset_btn")}</button>
+      </div>
     </div>
     <div style="margin-top:22px;">${resultsHead("exp-print-slot")}${resultsShell("exp-results")}</div>`;
 
@@ -660,10 +662,10 @@ function renderExecutionTab(root, user) {
       <div class="form-group"><label>${t("judgment_status")}</label>
         <select id="f-status"><option value="">${t("all")}</option><option value="in_progress">${t("stage_pleading")}</option><option value="closed">${t("stage_closed")}</option></select>
       </div>
-    </div>
-    <div class="search-actions">
-      <button class="btn btn-primary" id="btn-search">${icon("magnifying-glass")} ${t("search_btn")}</button>
-      <button class="btn btn-outline" id="btn-reset">${t("reset_btn")}</button>
+      <div class="search-actions">
+        <button class="btn btn-primary" id="btn-search">${icon("magnifying-glass")} ${t("search_btn")}</button>
+        <button class="btn btn-outline" id="btn-reset">${t("reset_btn")}</button>
+      </div>
     </div>
     <div style="margin-top:22px;">${resultsHead("ex-print-slot")}${resultsShell("ex-results")}</div>`;
 
@@ -738,11 +740,13 @@ function renderExecutionTab(root, user) {
 function renderInternalTab(root, user) {
   const lang = getLang();
   root.innerHTML = `
-    <div class="form-group" style="max-width:480px;">
-      <label>${t("tab_internal")}</label>
-      <input id="f-internal" placeholder="${t("internal_query")}"/>
+    <div class="search-form-grid">
+      <div class="form-group">
+        <label>${t("tab_internal")}</label>
+        <input id="f-internal" placeholder="${t("internal_query")}"/>
+      </div>
+      <div class="search-actions"><button class="btn btn-primary" id="btn-search">${icon("magnifying-glass")} ${t("search_btn")}</button></div>
     </div>
-    <div class="search-actions"><button class="btn btn-primary" id="btn-search">${icon("magnifying-glass")} ${t("search_btn")}</button></div>
     <div style="margin-top:22px;">${resultsHead("int-print-slot")}${resultsShell("int-results")}</div>`;
 
   const resultsEl = root.querySelector("#int-results");

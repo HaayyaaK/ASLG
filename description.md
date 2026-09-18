@@ -102,7 +102,7 @@ Every one of these rules is enforced twice: once in what buttons/pages you see (
 
 ### 3.1 The Official Search Engine (5 tabs)
 
-Found under **"Official Search Engine"** in the sidebar. It's built to feel just like the Kuwait MOJ e-Services search page, with five tabs across the top:
+Found under **"Cases"** in the sidebar, as that page's second tab (see 3.2 below — the two used to be separate sidebar entries). It's built to feel just like the Kuwait MOJ e-Services search page, with five tabs of its own across the top:
 
 | Tab | What you search by | What you get back |
 |---|---|---|
@@ -126,7 +126,14 @@ Found under **"Official Search Engine"** in the sidebar. It's built to feel just
 
 ### 3.2 Case Management (filterable list + detailed view)
 
-Found under **"Cases"** (page heading *Cases & Case Statements*). The case list is a **table** with two dropdown filters above it — **Status** (All/Active/Closed) and **Assigned Lawyer**. Arriving from a Dashboard stat card pre-applies the matching filter and shows a dismissible filter chip. There is no Kanban/board view.
+**One sidebar entry, two tabs (Merge A, Sept 2026 overhaul).** "Cases" is a single `ROUTES` entry rendered by `js/pages/cases-hub.js`, which mounts two existing page modules unchanged into contained tabs: **My Cases** (`js/pages/cases.js`) and **Official Search Engine** (`js/pages/search.js`, section 3.1 above). The hub is its own module because `search.js` already imports `openCaseDetail` from `cases.js`; `cases.js` importing `search.js` back would be circular.
+
+- **Permission gate.** `cases-hub.js::visibleSections()` keeps only the tabs whose permission key (`cases`, `search`) is not `none`. A Client's `search` is `none`, so a Client gets My Cases alone and **no tab bar is rendered at all**; the server independently refuses every `/api/search/*` call for that role regardless.
+- **URL.** `#/cases` is My Cases, `#/cases/search` the search tab. Any other second segment (`#/cases/active`, `#/cases/today-hearings`) is a My Cases filter read by `cases.js` itself, and is remembered so leaving the search tab and coming back restores the filtered list. Tab switches update the URL with `history.replaceState` (no history entry, no re-render). The old `#/search` route is rewritten to `#/cases/search` by `ROUTE_ALIASES` in `js/app.js`, so bookmarks keep working; a Client following such a link lands on My Cases with the segment dropped.
+- **No re-render, no re-fetch.** Each tab is mounted on first activation and then kept, so switching tabs repeats no request and keeps search results and filters. The case list both tabs need (the table; the Official Sync case picker) comes from `api.js::listCasesCached`: one shared in-flight promise, reused for 60 seconds, dropped on failure, and invalidated automatically by every call that changes the list (`createCase`, `updateCaseStage`, `watchCase`/`unwatchCase`, `importRecord`/`untrackCase`) — so the cache can hide at most a minute of *other* users' changes, never the current user's own. The **Refresh** button beside the tabs invalidates it and re-renders the page. This also fixed a pre-existing waste: the search tab re-requested the whole case list on every one of its five sub-tab clicks.
+- **Keyboard.** WAI-ARIA tabs pattern — arrow keys move between tabs (reading-direction aware, so ArrowLeft is "next" under RTL), Home/End jump; only the selected tab is in the Tab order.
+
+**The My Cases tab** (page heading *Cases & Case Statements*). The case list is a **table** with two dropdown filters above it — **Status** (All/Active/Closed) and **Assigned Lawyer**. Arriving from a Dashboard stat card pre-applies the matching filter and shows a dismissible filter chip. There is no Kanban/board view.
 
 Clicking any case opens its **detail view**, which shows:
 - The case number, court, and assigned lawyer as badges
@@ -267,7 +274,7 @@ Every role whose `reminders` permission is not `none` — Admin, Lawyer, Consult
 
 The Quick Actions row, the Quick Case Access panel and the stat grids keep their full-width position at the top of the page. Below them, `.dash-rows` stacks the remaining panels as full-width rows in this order: **My Week + Watched Cases** side by side (`.dash-row-split`, 50/50, collapsing to one column at ≤768px; a Client, who has no My Week, gets Watched Cases at full width instead), then **Useful Kuwait Websites**, then **Critical Upcoming Hearings**, then **Action Stream**. This replaced an earlier 2fr/1fr two-column grid on review. The widgets, all in `js/pages/dashboard.js` unless noted:
 
-- **Quick Actions row** (`.qa-actions-row`) — up to six one-click shortcuts, each shown only if the signed-in role could actually use it: **New Case** and **Assign a Task** (navigate to Cases / Reminders & Follow-ups), **Mark All Notifications Read** and **Sync Deadlines Now** (real in-place actions — no navigation, the page's own stat cards refresh after), **Request Case Update** (opens a case picker, then the existing shared Request Update dialog), and **Check Official Portal** (navigates to Official Search Engine). Distinct from the pre-existing "Quick Case Access" browse panel directly above it, despite the similar name. The Dashboard's **Useful Kuwait Websites** panel reuses this same `.qa-action-btn` style for its four links (icon + label; the per-site description moved to the button's `title` tooltip) rather than a parallel style, so the two rows can't visually drift apart.
+- **Quick Actions row** (`.qa-actions-row`) — up to six one-click shortcuts, each shown only if the signed-in role could actually use it: **New Case** and **Assign a Task** (navigate to Cases / Reminders & Follow-ups), **Mark All Notifications Read** and **Sync Deadlines Now** (real in-place actions — no navigation, the page's own stat cards refresh after), **Request Case Update** (opens a case picker, then the existing shared Request Update dialog), and **Check Official Portal** (navigates to `#/cases/search`, the Cases page's Official Search Engine tab). Distinct from the pre-existing "Quick Case Access" browse panel directly above it, despite the similar name. The Dashboard's **Useful Kuwait Websites** panel reuses this same `.qa-action-btn` style for its four links (icon + label; the per-site description moved to the button's `title` tooltip) rather than a parallel style, so the two rows can't visually drift apart.
 - **Action Stream** (`.astream-*`) — a merged, reverse-chronological feed of the signed-in user's notifications and open tasks, built by `js/action-feed.js::mergeActionFeed()`. Rows sort overdue tasks first, then tasks due within 3 days, then everything else newest-first. Clicking a task row (only rows with a case behind them are clickable) opens that case. This merge function is written to be reused as-is for Sub-phase 3.6's Notifications + Reminders unification, not thrown away afterward.
 - **My Week** — for any role with reminders access: tasks due in the next 7 days, tasks resolved (`CaseReminder.resolved_at`) in the past 7 days, and a small completion-rate bar.
 - **Watched Cases rail** — every case the signed-in user is currently watching (`is_watching`, the same flag the case-detail "Watch Case" toggle already returns), with its next hearing time if one is scheduled.
@@ -311,7 +318,7 @@ Instead each Print action hands `printRecord(spec)` a *description of the record
 | Location | Button id | What it prints |
 |---|---|---|
 | Dashboard | `#dash-print` | The 8 stat figures, then Critical Upcoming Hearings |
-| Official Search Engine (all 5 tabs) | `#<tab>-print-slot-btn` | The criteria used + the result rows; **rendered only once a search returns rows** |
+| Cases → Official Search Engine tab (all 5 search tabs) | `#<tab>-print-slot-btn` | The criteria used + the result rows; **rendered only once a search returns rows** |
 | Cases | `#cases-print` | The case list as filtered, naming the active filters |
 | Case details modal | `#case-print` | Full case record: identity, court, lawyer, stage, status, parties, summary, timeline, every note |
 | Document Center | `#docs-print` | The document *register* (case, name, size, review status, upload date) — not file contents |
@@ -623,7 +630,7 @@ Open the portal on a phone (or narrow a desktop browser window below about 768px
 
 **Where it shows up:**
 - **Case Details modal → "Procedural Intelligence"** section: the latest recorded event, any next-action candidates (with their due date, confidence badge, and legal citation), a "Record Procedure" button, and the full event history.
-- **Official Search Engine** page: a disclaimer that the five search tabs show the firm's own records, not live government data (unchanged behaviour — just now stated explicitly), plus the "Check official portal" panel described above.
+- **Official Search Engine** tab (on the Cases page): a disclaimer that the five search tabs show the firm's own records, not live government data (unchanged behaviour — just now stated explicitly), plus the "Check official portal" panel described above.
 - **Deadlines** (new sidebar entry): a firm-wide, permission-scoped list of every deadline, filterable by status, with Confirm/Waive actions.
 - **Dashboard**, third stats row: deadlines due this week, overdue deadlines, deadlines awaiting a lawyer's confirmation, and cases not checked against an official source recently.
 - **Procedure Rules** (new sidebar entry, Admin/Lawyer only): the rule catalogue itself, where a rule is enabled or disabled.
@@ -690,15 +697,15 @@ Every account uses the same starting password, which is defined in `backend/seed
 | `hassan.falah` | Lawyer | Notice "Users & Permissions" is now gone from the sidebar |
 | `mohammad.ahmad` | Consultant | Open a case — you can add a note and change its stage |
 | `ahmad.sayed` | Delegate | Open a case — notice there's *no* stage dropdown or note box (view-only). "Reminders & Follow-ups" is visible, but only shows tasks assigned to them — there's no way to create a new one |
-| `jarrah.saad` | Client | Notice "Official Search Engine" and "Reminders" are completely gone, and "Cases" shows only *one* case — theirs |
+| `jarrah.saad` | Client | Notice "Reminders" is completely gone, and "Cases" has no tab bar (no Official Search Engine tab) and shows only *one* case — theirs |
 
 To log out of one role and try another, click **"Logout"** at the bottom of the sidebar, then log in again with a different account.
 
 ### Step 4 — Test the Search Engine
 
 1. Log in as **Tamer Salem** (Admin) or **Hassan Falah** (Lawyer).
-2. Click **"Official Search Engine."**
-3. On the first tab, type `1123` into the Case Number box and click **Search** — you should see one matching case.
+2. Click **"Cases"**, then the **"Official Search Engine"** tab.
+3. On the first search tab, type `1123` into the Case Number box and click **Search** — you should see one matching case.
 4. Click **"Import to Tracking List"** on that result — a green success message should pop up.
 5. Click through the other four tabs (Sessions, Experts, Execution, Internal) and try a search on each — every tab should return real results from the database, not placeholders.
 
@@ -753,8 +760,8 @@ This proves a client genuinely cannot upload anything until staff opens the door
 This step proves the security isn't just "hiding buttons" — the server itself refuses unauthorized requests.
 
 1. Log in as **Jarrah Saad** (Client).
-2. Notice the sidebar has no "Official Search Engine" link — try typing `#/search` directly at the end of the page's address bar and pressing Enter anyway.
-3. You should see a plain **"You do not have permission to access this page"** message — not the search screen. This confirms the restriction is real, not just a hidden button.
+2. Notice the Cases page has no "Official Search Engine" tab — try typing `#/cases/search` (or the old `#/search`) directly at the end of the page's address bar and pressing Enter anyway.
+3. You land on the plain case list with no search tab, and the address drops back to `#/cases` — not the search screen. The restriction is also enforced by the server: every `/api/search/*` request from a Client account is refused, so even a hand-made request gets nothing.
 
 ### Step 11 — Test the Language Toggle
 
@@ -1154,7 +1161,7 @@ The frontend went through two dedicated responsive-engineering passes (documente
 - **Design tokens:** a Primitive → Semantic → Component CSS custom-property hierarchy in `css/styles.css` (`--space-*`/`--text-*` primitives → `--surface`/`--text`/`--success` etc. semantic tokens → `--control-height`/`--gutter`/`--content-max` component tokens), with legacy aliases (`--color-bg`, etc.) so no existing component rule had to change during the migration.
 - **Mobile is a layout adaptation, not a separate app:** one shared codebase for both modes. Below 768px, the sidebar is replaced by a bottom tab bar + a slide-up "More" sheet (`js/app.js`), all sharing the exact same routes/data/business logic as desktop.
 - **Tables become mobile record cards, not horizontal-scroll tables:** row-based tables (search results, cases, documents, users) carry a `.data-table` class and per-cell `data-label` attributes; a CSS media query at ≤768px transforms them into stacked key/value cards, with the header row visually hidden but kept in the accessibility tree (not `display:none`, which would remove it entirely). The **Users → Permissions matrix is a deliberate exception** — it stays a plain, horizontally-scrollable table at every width, because a role × module comparison grid is genuinely two-dimensional and would lose its point if stacked into cards.
-- **Navigation labels are content-aware:** the sidebar and the "More" sheet use full descriptive labels (`nav_search` = "Official Search Engine"); the bottom tab bar and the top bar's title use short labels (`nav_search_short` = "Search") via a shared `.label-full`/`.label-short` CSS pair that both markup locations render — the swap is a pure CSS breakpoint flip, never a JS viewport check.
+- **Navigation labels are content-aware:** the sidebar and the "More" sheet use full descriptive labels (`nav_reminders` = "Reminders & Follow-ups"); the bottom tab bar and the top bar's title use short labels (`nav_reminders_short` = "Reminders") via a shared `.label-full`/`.label-short` CSS pair that both markup locations render — the swap is a pure CSS breakpoint flip, never a JS viewport check.
 - **Known, documented exceptions:** `.btn-sm` (36px) is intentionally below the 44px `--control-height` touch-target floor for dense, repeated inline table/case-list actions; the Search tab bar uses contained horizontal scroll as a deliberate choice (5 tabs genuinely don't fit a narrow screen without either scrolling or losing information). Cases no longer has a Kanban view at all (removed by request — table is now the only, default view), so that's no longer part of this list.
 - **Form labels are wired up automatically, app-wide:** every `.form-group > label` in the app (login, search, cases, documents, reminders, users — several dozen fields) previously sat next to its `<input>`/`<select>`/`<textarea>` with no `for`/`id` pairing, which is exactly what triggers a browser's "a `<label>` isn't associated with a form field" warning. Rather than hand-adding `id`/`for` pairs at each of those call sites, `js/app.js` runs a single `MutationObserver` on `document.body` (covers `#app-root` and every modal, since modals mount directly on `document.body`) that auto-assigns an `id` and matching `label[for]` to any bare `.form-group` label it finds — fixes every current field and any future one, with no per-page-module changes required.
 - **Not done, out of scope:** a wholesale px→rem conversion of the pre-existing (pre-audit) component CSS, which still uses raw pixel font sizes in many places — real browser zoom (Ctrl+/−) still works correctly on it, but OS-level "default font size" accessibility settings won't reach it. Flagged as a larger, separate future effort.

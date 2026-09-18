@@ -188,14 +188,53 @@ export const bulkUserAction = (userIds, action, newPassword) => request("/users/
 
 // ---------------- Cases ----------------
 export const listCases = () => request("/cases");
+
+/**
+ * listCases() behind a short shared cache.
+ *
+ * The Cases page's two tabs both need the case list (My Cases for the table,
+ * Official Search Engine for its Official Sync case picker), and the search
+ * tab used to re-request it on every one of its five sub-tab clicks. Callers
+ * now share one in-flight promise and reuse a result younger than maxAgeMs.
+ *
+ * Staleness is bounded two ways: the age limit, and invalidation on every
+ * case-list-changing call below (create, stage, watch/track) -- so a user
+ * never sees a stale result of their own action, only up to 60s of other
+ * people's. A failed request is dropped from the cache so the next caller
+ * retries instead of inheriting the error.
+ */
+const CASES_CACHE_MAX_AGE_MS = 60000;
+let casesCache = null;
+
+export function listCasesCached({ maxAgeMs = CASES_CACHE_MAX_AGE_MS } = {}) {
+  if (!casesCache || Date.now() - casesCache.at > maxAgeMs) {
+    const promise = listCases();
+    casesCache = { at: Date.now(), promise };
+    promise.catch(() => {
+      if (casesCache?.promise === promise) casesCache = null;
+    });
+  }
+  return casesCache.promise;
+}
+
+export function invalidateCasesCache() {
+  casesCache = null;
+}
+
+async function invalidatingCases(promise) {
+  const result = await promise;
+  invalidateCasesCache();
+  return result;
+}
+
 export const getCase = (id) => request(`/cases/${id}`);
-export const createCase = (payload) => request("/cases", { method: "POST", body: payload });
+export const createCase = (payload) => invalidatingCases(request("/cases", { method: "POST", body: payload }));
 export const listCourts = () => request("/cases/courts");
 export const listCaseLawyers = () => request("/cases/assignable-lawyers");
 export const addCaseNote = (id, noteText) => request(`/cases/${id}/notes`, { method: "POST", body: { note_text: noteText } });
-export const updateCaseStage = (id, stage) => request(`/cases/${id}/stage`, { method: "PUT", body: { stage } });
-export const watchCase = (id) => request(`/cases/${id}/watch`, { method: "POST" });
-export const unwatchCase = (id) => request(`/cases/${id}/watch`, { method: "DELETE" });
+export const updateCaseStage = (id, stage) => invalidatingCases(request(`/cases/${id}/stage`, { method: "PUT", body: { stage } }));
+export const watchCase = (id) => invalidatingCases(request(`/cases/${id}/watch`, { method: "POST" }));
+export const unwatchCase = (id) => invalidatingCases(request(`/cases/${id}/watch`, { method: "DELETE" }));
 export const listLinkableClients = () => request("/cases/linkable-clients");
 export const listCaseLinks = (caseId) => request(`/cases/${caseId}/links`);
 export const linkUserToCase = (caseId, userId, canUpload) =>
@@ -215,9 +254,9 @@ export const searchExperts = (params) => request(`/search/experts${qs(params)}`)
 export const searchExecution = (params) => request(`/search/execution${qs(params)}`);
 export const searchInternal = (q) => request(`/search/internal${qs({ q })}`);
 export const importRecord = (sourceType, sourceRefId, watch = true) =>
-  request("/search/import", { method: "POST", body: { source_type: sourceType, source_ref_id: sourceRefId, watch } });
+  invalidatingCases(request("/search/import", { method: "POST", body: { source_type: sourceType, source_ref_id: sourceRefId, watch } }));
 export const listTracked = () => request("/search/tracked");
-export const untrackCase = (caseId) => request(`/search/track/${caseId}`, { method: "DELETE" });
+export const untrackCase = (caseId) => invalidatingCases(request(`/search/track/${caseId}`, { method: "DELETE" }));
 export const listAssignableStaff = () => request("/search/assignable-staff");
 export const requestStatusUpdate = (payload) => request("/search/request-update", { method: "POST", body: payload });
 

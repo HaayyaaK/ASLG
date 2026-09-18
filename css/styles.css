@@ -1911,15 +1911,94 @@ a {
   border-bottom-color: var(--color-accent);
 }
 
+/* One form-grid for every search/filter form in the app (search.js, cases.js,
+   reminders.js, users.js). min(100%, ...) lets a column shrink below its
+   12.5rem floor on a narrow screen instead of overflowing, so no separate
+   mobile override is needed. `.search-actions` is the grid's LAST CHILD, not
+   a sibling after it: spanning 1 / -1 puts it on its own full row, aligned to
+   the inline end, sharing the grid's own row gap instead of a second margin. */
 .search-form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 14px;
-  margin-bottom: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12.5rem), 1fr));
+  gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
 }
 .search-actions {
   display: flex;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.search-form-grid > .search-actions {
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+}
+
+/* ---------- Cases page: contained tabs (Merge A) ----------
+   A segmented control, deliberately unlike `.tabs`/`.tab-btn` below it: the
+   Official Search Engine tab has its own five sub-tabs in that style, and
+   two stacked rows of identical-looking tabs would read as one confusing
+   nav. Logical properties throughout; RTL mirrors with no separate rule. */
+.hub-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.hub-tabs {
+  display: inline-flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  max-width: 100%;
+  overflow-x: auto;
+  background: var(--surface-sunken);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.hub-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  border-radius: calc(var(--radius-md) - 2px);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+.hub-tab:hover {
+  color: var(--text);
+}
+/* Filled primary, not white-on-sunken: white against --surface-sunken is
+   ~1.1:1, far under WCAG 1.4.11's 3:1 for a state indicator, and live
+   testing showed a focus ring on the *unselected* tab reading as the
+   selection. White text on --color-primary is well above 4.5:1. */
+.hub-tab[aria-selected="true"],
+.hub-tab[aria-selected="true"]:hover {
+  background: var(--color-primary);
+  color: var(--text-on-dark);
+  box-shadow: var(--shadow-sm);
+}
+/* An outline offset clear of the tab, rather than a box-shadow, so it can't
+   be confused with (or hidden by) the selected tab's own fill and shadow.
+   primary-light, not the accent gold: gold on --surface-sunken is ~2.3:1. */
+.hub-tab:focus-visible {
+  outline: 2px solid var(--color-primary-light);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hub-tab {
+    transition: none;
+  }
 }
 
 table {
@@ -2509,10 +2588,6 @@ tbody tr:hover {
   }
   .filters-row .form-group {
     width: 100%;
-  }
-
-  .search-form-grid {
-    grid-template-columns: 1fr;
   }
 
   .dropzone {

@@ -29,7 +29,6 @@ const dict = {
     nav_reminders: 'التذكيرات والمتابعات',
     nav_activity_log: 'سجل الأنشطة',
     nav_dashboard_short: 'الرئيسية',
-    nav_search_short: 'البحث',
     nav_documents_short: 'المستندات',
     nav_notifications_short: 'التنبيهات',
     nav_users_short: 'المستخدمون',
@@ -500,6 +499,11 @@ const dict = {
     watched_title: 'القضايا المتابَعة',
     watched_empty: 'لا توجد قضايا قيد المتابعة',
     watched_view_all: 'عرض كل القضايا',
+    // --- Cases page tabs (Merge A) ---
+    cases_tab_mine: 'قضاياي',
+    cases_hub_tabs_label: 'أقسام صفحة القضايا',
+    cases_hub_refresh: 'تحديث',
+    cases_hub_refresh_hint: 'إعادة تحميل قائمة القضايا من الخادم',
   },
   en: {
     app_name: 'Al Saif Legal Group',
@@ -531,7 +535,6 @@ const dict = {
     nav_reminders: 'Reminders & Follow-ups',
     nav_activity_log: 'Activity Log',
     nav_dashboard_short: 'Dashboard',
-    nav_search_short: 'Search',
     nav_documents_short: 'Documents',
     nav_notifications_short: 'Alerts',
     nav_users_short: 'Users',
@@ -1004,6 +1007,11 @@ const dict = {
     watched_title: 'Watched Cases',
     watched_empty: 'No cases being watched',
     watched_view_all: 'View all cases',
+    // --- Cases page tabs (Merge A) ---
+    cases_tab_mine: 'My Cases',
+    cases_hub_tabs_label: 'Cases page sections',
+    cases_hub_refresh: 'Refresh',
+    cases_hub_refresh_hint: 'Reload the case list from the server',
   },
 };
 

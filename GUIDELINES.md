@@ -32,8 +32,8 @@ everywhere.
 
 **Part 2 — The pages, in menu order**
 - [2.1 Dashboard](#21-dashboard)
-- [2.2 Official Search Engine](#22-official-search-engine)
-- [2.3 Cases](#23-cases)
+- [2.2 Cases](#22-cases)
+- [2.3 Cases → Official Search Engine tab](#23-cases--official-search-engine-tab)
 - [2.4 Document Center](#24-document-center)
 - [2.5 Reminders & Follow-ups](#25-reminders--follow-ups)
 - [2.6 Notifications](#26-notifications)
@@ -86,8 +86,7 @@ pages your role is allowed to open, always in this order:
 | Menu entry | What it is for |
 |---|---|
 | **Dashboard** | Your daily summary and the hearings coming up |
-| **Official Search Engine** | Look up cases, sessions, experts and execution files |
-| **Cases** | The firm's case list, case details, notes and stage |
+| **Cases** | The firm's case list, case details, notes and stage — plus the **Official Search Engine** tab for looking up cases, sessions, experts and execution files |
 | **Document Center** | Upload, preview and download case documents |
 | **Reminders & Follow-ups** | Tasks you owe other people and they owe you |
 | **Notifications** | Every alert the system has sent you |
@@ -224,7 +223,7 @@ right-to-left Arabic sheet, print in English and you get an English one.
 | Page | Button prints |
 |---|---|
 | Dashboard | The eight figures, then the Critical Upcoming Hearings list |
-| Official Search Engine | The results of the search you just ran, with the criteria you used |
+| Cases → Official Search Engine tab | The results of the search you just ran, with the criteria you used |
 | Cases | The case list exactly as you have filtered it |
 | Cases → **Case details** | The full case record: number, court, lawyer, stage, parties, summary, timeline and every note |
 | Document Center | The document register: which case, file name, size, review status, upload date |
@@ -344,7 +343,7 @@ ever see the ones your role can use:
 | **Assign a Task** | Takes you to Reminders & Follow-ups |
 | **Mark All Notifications Read** | Marks every notification read, right there — no page change |
 | **Request Case Update** | Pick a case, then send the usual Request Update ask |
-| **Check Official Portal** | Takes you to the Official Search Engine |
+| **Check Official Portal** | Opens Cases on its Official Search Engine tab |
 | **Sync Deadlines Now** | Refreshes the Deadlines figures immediately |
 
 **Quick search (Ctrl+K)** — a button beside the page title (or the Ctrl+K
@@ -369,117 +368,30 @@ it.
 
 ---
 
-## 2.2 Official Search Engine
+## 2.2 Cases
 
-**Menu entry:** Official Search Engine. Page heading: *Integrated Official
-Search Engine*, subtitle *Matches Kuwait Ministry of Justice e-Services*.
+**Menu entry:** Cases. This one page has two tabs across the top:
 
-This is **one page with five tabs**. They are tabs across the top of the page,
-not separate menu entries.
+| Tab | What it holds |
+|---|---|
+| **My Cases** | The firm's case list, case details, notes and stage — described in this section |
+| **Official Search Engine** | Search by case number, sessions, experts, execution files, or across the firm's records — see [2.3](#23-cases--official-search-engine-tab) |
 
-| Tab | Use it to find | Fields you can search on |
-|---|---|---|
-| **Case Number Search** | A case by its official number | Court Level/Category, Case Number, Year, Civil ID / Party Name |
-| **Sessions & Circuits** | Court sessions and the circuit they sit in | Circuit, Session Date |
-| **Experts** | Court-appointed expert files | Expert File No., Expert Name |
-| **Execution** | Enforcement / execution files | Execution File No., Judgment Enforcement Status |
-| **Internal Firm Search** | Anything inside the firm's own records | One box: *Search firm cases and documents…* |
+**Clients see only My Cases** — the Official Search Engine tab is not shown to
+them at all. Switching between the two tabs keeps your place in each: a search
+you ran is still there when you come back to it.
 
-Fill in what you know and press **Search**, or press **Reset** to clear the form
-and start again. Before you search, the page shows the hint **"Enter search
-criteria then press Search"**. If nothing matches you get **"No matching
-records. Try adjusting your search criteria."**
+**Refresh** (beside the tabs) reloads the case list from the server. You rarely
+need it: the list already refreshes itself after anything you change, and is at
+most a minute behind changes colleagues make.
 
-### Reading a result
+Old bookmarks to the Official Search Engine still work — they open this page on
+the Official Search Engine tab.
 
-You do not need to memorise case numbers. **Every result on the Sessions &
-Circuits, Experts and Execution tabs shows the case it belongs to**: the case
-number and year, the current stage badge, the parties, and the court. If that
-case has been closed, a **Closed** badge is shown as well.
+### The My Cases tab
 
-This information is read from the case record itself every time you search, so a
-result can never disagree with what the Cases page says. If a colleague changes
-a case's stage, your next search shows the new stage.
-
-**Case Number Search puts the exact match first.** If you search for case number
-`1123`, the case actually numbered 1123 appears at the top, above any partial
-matches.
-
-**You only ever see what you are allowed to see.** Search results obey the same
-permission rules as the rest of the system. A client (**Client** role) searching
-sees only their own cases and documents; they never see another client's records
-in a search result.
-
-### Actions on every result
-
-Each result row carries the same set of buttons.
-
-#### Open Case
-
-Opens the full case details for the case behind that result — the same view you
-get from the **Cases** page.
-
-#### Track
-
-**Track** adds the case to your personal tracked list.
-
-- Before you track it, the button reads **Track**, tooltip *"Add this case to
-  your tracked list"*.
-- After you track it, the button changes colour and reads **Tracked**, tooltip
-  *"You are tracking this case — click to stop tracking"*, and you see the
-  message *"Case added to your tracked list"*.
-- Pressing it again untracks the case and shows *"Stopped tracking this case"*.
-
-The state is remembered. If you search for the same case tomorrow, the button
-still reads **Tracked**. Inside the case details, the same relationship appears
-as the **Watching** bookmark.
-
-**Tracking is personal.** It does not assign anything to anyone and it does not
-change the case. What it does do is put you on the notification list: **you
-receive the pre-hearing warnings for every case you track**, exactly as the
-assigned lawyer does. That is the reason to use it.
-
-The older wording **Import to Tracking List** refers to the same action.
-
-#### Request Update
-
-*(System Admin and Lawyer only.)* Use this to ask a specific colleague where a
-case stands.
-
-1. Press **Request Update**. A dialog opens showing **About** — the case you are
-   asking about.
-2. **Ask** — choose the colleague to ask.
-3. **Reply needed by** \* — the date and time you need an answer by. Required,
-   and it must be in the future.
-4. **Message (optional)** — say what you need, for example *"Has the memo been
-   filed? Please update the status."*
-5. Press **Send Request**.
-
-You will see **"Update request sent successfully"**.
-
-What actually happens: a real task is created in **Reminders & Follow-ups**,
-assigned to the person you chose, and they are notified. The dialog says this
-plainly: *"The person you choose will be notified and will see this under
-'Reminders & Follow-ups'. Asking for an update does not change the case status
-by itself."*
-
-**Requesting an update never changes the case.** The stage only changes when
-someone actually changes it on the Cases page.
-
-If the reply-by date is missing or in the past you are told
-(*"Please choose a reply-by date"* / *"The reply-by date must be in the
-future"*). If no colleague is available to ask, the dialog says *"There are no
-staff members available to ask"*.
-
-**Printing.** Once a search returns results, a **Print** button appears beside **Results**. It prints the criteria you searched on and the rows that came back — the current tab only. See [1.7](#17-printing).
-
----
-
-## 2.3 Cases
-
-**Menu entry:** Cases. Page heading: *Cases & Case Statements*.
-
-The case list, with two dropdown filters above it:
+Page heading: *Cases & Case Statements*. The case list, with two dropdown
+filters above it:
 
 - **Status** — All / Active / Closed.
 - **Assigned Lawyer** — All, or one specific lawyer.
@@ -650,6 +562,111 @@ design. It's applied once, by hand, from `db/migration_user_case_links.sql`
 (requires MySQL 8.0.13+ for the functional unique index used above). Rollback
 is a plain `DROP TABLE user_case_links;`, safe only once the corresponding
 application code has also been reverted.
+
+---
+
+## 2.3 Cases → Official Search Engine tab
+
+**Where:** the **Cases** menu entry, second tab. Heading: *Integrated Official
+Search Engine*, subtitle *Matches Kuwait Ministry of Justice e-Services*.
+
+This tab has **five search tabs of its own** across the top.
+
+| Tab | Use it to find | Fields you can search on |
+|---|---|---|
+| **Case Number Search** | A case by its official number | Court Level/Category, Case Number, Year, Civil ID / Party Name |
+| **Sessions & Circuits** | Court sessions and the circuit they sit in | Circuit, Session Date |
+| **Experts** | Court-appointed expert files | Expert File No., Expert Name |
+| **Execution** | Enforcement / execution files | Execution File No., Judgment Enforcement Status |
+| **Internal Firm Search** | Anything inside the firm's own records | One box: *Search firm cases and documents…* |
+
+Fill in what you know and press **Search**, or press **Reset** to clear the form
+and start again. Before you search, the page shows the hint **"Enter search
+criteria then press Search"**. If nothing matches you get **"No matching
+records. Try adjusting your search criteria."**
+
+### Reading a result
+
+You do not need to memorise case numbers. **Every result on the Sessions &
+Circuits, Experts and Execution tabs shows the case it belongs to**: the case
+number and year, the current stage badge, the parties, and the court. If that
+case has been closed, a **Closed** badge is shown as well.
+
+This information is read from the case record itself every time you search, so a
+result can never disagree with what the Cases page says. If a colleague changes
+a case's stage, your next search shows the new stage.
+
+**Case Number Search puts the exact match first.** If you search for case number
+`1123`, the case actually numbered 1123 appears at the top, above any partial
+matches.
+
+**You only ever see what you are allowed to see.** Search results obey the same
+permission rules as the rest of the system. A client (**Client** role) searching
+sees only their own cases and documents; they never see another client's records
+in a search result.
+
+### Actions on every result
+
+Each result row carries the same set of buttons.
+
+#### Open Case
+
+Opens the full case details for the case behind that result — the same view you
+get from the **Cases** page.
+
+#### Track
+
+**Track** adds the case to your personal tracked list.
+
+- Before you track it, the button reads **Track**, tooltip *"Add this case to
+  your tracked list"*.
+- After you track it, the button changes colour and reads **Tracked**, tooltip
+  *"You are tracking this case — click to stop tracking"*, and you see the
+  message *"Case added to your tracked list"*.
+- Pressing it again untracks the case and shows *"Stopped tracking this case"*.
+
+The state is remembered. If you search for the same case tomorrow, the button
+still reads **Tracked**. Inside the case details, the same relationship appears
+as the **Watching** bookmark.
+
+**Tracking is personal.** It does not assign anything to anyone and it does not
+change the case. What it does do is put you on the notification list: **you
+receive the pre-hearing warnings for every case you track**, exactly as the
+assigned lawyer does. That is the reason to use it.
+
+The older wording **Import to Tracking List** refers to the same action.
+
+#### Request Update
+
+*(System Admin and Lawyer only.)* Use this to ask a specific colleague where a
+case stands.
+
+1. Press **Request Update**. A dialog opens showing **About** — the case you are
+   asking about.
+2. **Ask** — choose the colleague to ask.
+3. **Reply needed by** \* — the date and time you need an answer by. Required,
+   and it must be in the future.
+4. **Message (optional)** — say what you need, for example *"Has the memo been
+   filed? Please update the status."*
+5. Press **Send Request**.
+
+You will see **"Update request sent successfully"**.
+
+What actually happens: a real task is created in **Reminders & Follow-ups**,
+assigned to the person you chose, and they are notified. The dialog says this
+plainly: *"The person you choose will be notified and will see this under
+'Reminders & Follow-ups'. Asking for an update does not change the case status
+by itself."*
+
+**Requesting an update never changes the case.** The stage only changes when
+someone actually changes it on the Cases page.
+
+If the reply-by date is missing or in the past you are told
+(*"Please choose a reply-by date"* / *"The reply-by date must be in the
+future"*). If no colleague is available to ask, the dialog says *"There are no
+staff members available to ask"*.
+
+**Printing.** Once a search returns results, a **Print** button appears beside **Results**. It prints the criteria you searched on and the rows that came back — the current tab only. See [1.7](#17-printing).
 
 ---
 
@@ -1054,7 +1071,7 @@ Once active, this feature answers one question for any case: **what actually hap
 
 - **Case Details → Procedural Intelligence.** Opening any case now shows its latest recorded event, any deadlines the system has worked out from it, and a **Record Procedure** button to log the next real thing that happens (a hearing, a judgment, a filing, anything). A full history of every event on the case sits below, collapsed by default.
 - **Deadlines** (new sidebar entry). Every deadline across every case you can see, in one list — overdue ones in red, with **Confirm** and **Waive** buttons for the ones you can act on.
-- **Official Search Engine → Check Official Portal.** A small panel under the search tabs: pick a case and a real government source (MOJ e-Services, Sahel, etc.), click **Open official portal** to sign in yourself in a new tab, then come back and record what you found. Nothing you see on the five search tabs above it is live government data — it never has been, it's the firm's own records styled to look familiar — and this panel is the honest, human-in-the-loop way to actually check the real thing.
+- **Cases → Official Search Engine tab → Check Official Portal.** A small panel under the search tabs: pick a case and a real government source (MOJ e-Services, Sahel, etc.), click **Open official portal** to sign in yourself in a new tab, then come back and record what you found. Nothing you see on the five search tabs above it is live government data — it never has been, it's the firm's own records styled to look familiar — and this panel is the honest, human-in-the-loop way to actually check the real thing.
 - **Procedure Rules** (new sidebar entry, System Admin and Lawyer only). The list of legal deadline rules the system knows about — each with its legal citation and whether it's been switched on.
 
 ### The most important thing to understand: a "Suggested" badge is not a fact

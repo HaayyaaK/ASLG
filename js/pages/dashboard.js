@@ -253,7 +253,7 @@ export async function render(container, user) {
     location.hash = "#/reminders";
   }
   function handleCheckPortal() {
-    location.hash = "#/search";
+    location.hash = "#/cases/search";
   }
   async function handleMarkAllRead() {
     try {
@@ -289,8 +289,9 @@ export async function render(container, user) {
 
     const navList = [
       { route: "dashboard", labelKey: "nav_dashboard", icon: "house", always: true },
-      { route: "search", labelKey: "nav_search", icon: "magnifying-glass", perm: "search" },
       { route: "cases", labelKey: "nav_cases", icon: "folder-open", perm: "cases" },
+      // A tab inside Cases now, not its own page; still worth a direct entry.
+      { route: "cases/search", labelKey: "nav_search", icon: "magnifying-glass", perm: "search" },
       { route: "documents", labelKey: "nav_documents", icon: "file-lines", perm: "documents" },
       { route: "reminders", labelKey: "nav_reminders", icon: "clock-rotate-left", perm: "reminders" },
       { route: "deadlines", labelKey: "nav_deadlines", icon: "hourglass-half", perm: "deadlines" },

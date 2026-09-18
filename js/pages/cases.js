@@ -1,6 +1,6 @@
 import { t, getLang } from '../i18n.js';
 import {
-  listCases,
+  listCasesCached,
   getCase,
   createCase,
   listCourts,
@@ -155,7 +155,7 @@ export async function render(container, user) {
   });
 
   try {
-    cachedCases = await listCases();
+    cachedCases = await listCasesCached();
   } catch (err) {
     viewEl.innerHTML = `<p class="text-muted">${escapeHtml(err.message)}</p>`;
     return;
@@ -195,7 +195,9 @@ export async function render(container, user) {
   if (newCaseBtn) {
     newCaseBtn.addEventListener('click', () =>
       openNewCaseForm(async () => {
-        cachedCases = await listCases();
+        // createCase() has already invalidated the shared cache, so this is
+        // a fresh request that includes the new case.
+        cachedCases = await listCasesCached();
         renderView();
       }),
     );
@@ -562,7 +564,7 @@ function wireLinkedClients(overlay, c) {
     }
     const lang = getLang();
     formHost.innerHTML = `
-      <div class="search-form-grid" style="margin-top:10px;">
+      <div class="search-form-grid" style="margin-top:var(--space-3);">
         <div class="form-group">
           <label>${t('select_client')}</label>
           <select id="link-client-select">
@@ -700,7 +702,7 @@ function wireProcedureSection(overlay, c, user) {
         return;
       }
       formHost.innerHTML = `
-        <div class="search-form-grid" style="margin-top:10px;">
+        <div class="search-form-grid" style="margin-top:var(--space-3);">
           <div class="form-group">
             <label>${t('proc_type')}</label>
             <select id="proc-type-select">
