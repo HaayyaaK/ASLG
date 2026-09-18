@@ -3315,14 +3315,14 @@ tbody tr:hover {
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  border-bottom: 2px solid #12315a;
+  border-bottom: 2px solid var(--color-primary);
   padding-bottom: 8px;
   margin-bottom: 14px;
 }
 .print-head .pb-name {
   font-size: 15pt;
   font-weight: 700;
-  color: #12315a;
+  color: var(--color-primary);
 }
 .print-head .pb-sub {
   font-size: 9pt;
@@ -3341,7 +3341,7 @@ tbody tr:hover {
 .print-title {
   font-size: 14pt;
   margin: 0 0 2px;
-  color: #12315a;
+  color: var(--color-primary);
 }
 .print-subtitle {
   margin: 0 0 12px;
@@ -3393,7 +3393,7 @@ tbody tr:hover {
   margin: 0 0 6px;
   padding-bottom: 3px;
   border-bottom: 1px solid #ccc;
-  color: #12315a;
+  color: var(--color-primary);
 }
 .print-count {
   font-weight: 400;
@@ -3417,7 +3417,7 @@ tbody tr:hover {
 .print-table th {
   background: #eef1f6;
   font-weight: 700;
-  color: #12315a;
+  color: var(--color-primary);
 }
 
 .print-list {
