@@ -126,9 +126,9 @@ function currentRoutePath() {
 }
 
 function renderShell(user) {
-  // The login background preload has served its purpose (or was never
-  // needed); leaving it would re-trigger "preloaded but not used".
-  loginPage.removeBackgroundPreload();
+  // The login background preload (injected by index.html's inline script
+  // when nobody was signed in) has served its purpose once the shell shows.
+  document.getElementById("login-bg-preload")?.remove();
   const lang = getLang();
   const visibleRoutes = ROUTES.filter((r) => getPermission(r.perm) !== "none");
   const primaryRoutes = visibleRoutes.slice(0, MAX_PRIMARY_TABS);

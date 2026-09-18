@@ -12,10 +12,29 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png" />
 <link rel="manifest" href="/assets/site.webmanifest" />
 <link rel="stylesheet" href="/_shared/fontawesome/7.3.1/css/all.min.css" />
-<!-- No static preload for the login background (/assets/background.jpg): it
-     was preloaded on every page, so every signed-in page logged "preloaded
-     but not used". js/pages/login.js injects the preload only when the login
-     screen is what will render. -->
+<!-- Login background preload, only when the login screen is what will render.
+     A static <link rel="preload"> here made every signed-in page log
+     "preloaded but not used"; injecting it from js/pages/login.js fixed that
+     but came too late to help (after the app's modules load). This runs
+     during HTML parse, before the stylesheet and app bundle, so the photo
+     starts downloading immediately for the login page's first paint. The
+     test mirrors js/api.js's session: signed in == "aslg_session" present.
+     app.js::renderShell removes the tag once the shell renders. -->
+<script>
+  try {
+    if (!sessionStorage.getItem("aslg_session")) {
+      var bgPreload = document.createElement("link");
+      bgPreload.id = "login-bg-preload";
+      bgPreload.rel = "preload";
+      bgPreload.as = "image";
+      bgPreload.href = "/assets/background.jpg";
+      bgPreload.setAttribute("fetchpriority", "high");
+      document.head.appendChild(bgPreload);
+    }
+  } catch (e) {
+    /* storage unavailable: skip the hint; the login page still works */
+  }
+</script>
 <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
