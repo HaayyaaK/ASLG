@@ -91,6 +91,11 @@
   --text-lg: 1.0625rem; /* 17px */
   --text-xl: 1.25rem; /* 20px */
   --text-2xl: clamp(1.375rem, 1.2rem + 0.8vw, 1.625rem); /* headings scale fluidly */
+  /* Labels on icon+label controls (.qa-action-btn, .hub-tab): 12px -> 13px.
+     Scales down only slightly -- a control label must stay readable -- and
+     is paired with single-line labels (white-space: nowrap + ellipsis) so a
+     long label can never wrap a button taller than its neighbours. */
+  --text-control: clamp(0.75rem, 0.7rem + 0.2vw, 0.8125rem);
 
   /* Primitive brand palette */
   --color-primary: #12315a;
@@ -182,9 +187,17 @@
      Both size tokens are clamp()s that already cover the old mobile-vs-desktop
      split with ONE fluid value, so the 768px breakpoint no longer needs its
      own override for either -- see the removed rules in section 20. */
-  --stat-card-padding: clamp(0.625rem, 0.5rem + 0.3vw, 0.75rem); /* 10px -> 12px, was 18px 20px desktop / 14px mobile */
+  --stat-card-padding: clamp(
+    0.625rem,
+    0.5rem + 0.3vw,
+    0.75rem
+  ); /* 10px -> 12px, was 18px 20px desktop / 14px mobile */
   --stat-icon-size: 1.5rem; /* 24px, was 40px */
-  --stat-value-size: clamp(1.125rem, 1rem + 0.4vw, 1.375rem); /* 18px -> 22px, was 26px desktop / 21px mobile */
+  --stat-value-size: clamp(
+    1.125rem,
+    1rem + 0.4vw,
+    1.375rem
+  ); /* 18px -> 22px, was 26px desktop / 21px mobile */
 
   /* ---- Dashboard: Quick Case Access panel (Sub-phase 3.2, ground-up rewrite,
      Task 5) -- new concept, no prior equivalent existed for either token. ---- */
@@ -335,7 +348,10 @@ a {
       var(--color-primary-light)
     );
   background-size: cover, cover, cover;
-  background-position: center center, center center, center center;
+  background-position:
+    center center,
+    center center,
+    center center;
   background-repeat: no-repeat, no-repeat, no-repeat;
   padding: var(--gutter);
 }
@@ -381,7 +397,10 @@ a {
    while a small laptop window at 800px wide is landscape and does not. */
 @media (orientation: portrait) and (max-width: 900px) {
   .login-screen {
-    background-position: 78% center, 78% center, 78% center;
+    background-position:
+      78% center,
+      78% center,
+      78% center;
   }
 }
 
@@ -420,7 +439,10 @@ a {
    the upward bias was for. */
 @media (min-aspect-ratio: 2/1) {
   .login-screen {
-    background-position: center 58%, center 58%, center 58%;
+    background-position:
+      center 58%,
+      center 58%,
+      center 58%;
   }
 }
 
@@ -1071,7 +1093,9 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: calc(var(--stat-icon-size) * 0.45); /* same 18px:40px ratio as before,
+  font-size: calc(
+    var(--stat-icon-size) * 0.45
+  ); /* same 18px:40px ratio as before,
     genuinely derived via calc() so it keeps tracking the box if --stat-icon-size
     ever changes -- an em here would resolve against the inherited text size, not
     the icon box, and silently stop tracking it */
@@ -1082,7 +1106,9 @@ a {
   font-weight: 700;
 }
 .stat-card .stat-label {
-  font-size: var(--text-xs); /* was a bespoke 12.5px -- close enough to the existing
+  font-size: var(
+    --text-xs
+  ); /* was a bespoke 12.5px -- close enough to the existing
     primitive that a dedicated token would just duplicate it (see the Sept 2026
     Foundation report: only add a token for a genuinely new, reused value). */
   color: var(--color-text-muted);
@@ -1372,23 +1398,39 @@ a {
   border-radius: var(--radius-md);
   padding: var(--space-2) var(--space-4);
   min-height: var(--control-height);
-  font-size: var(--text-sm);
+  max-inline-size: 100%;
+  font-size: var(--text-control);
   font-weight: 600;
+  line-height: 1.2;
   color: var(--text);
+  /* The Kuwait links are <a> elements; without this they kept the browser's
+     link underline and never truly matched the Quick Actions buttons. */
+  text-decoration: none;
   cursor: pointer;
   transition:
     border-color 0.15s,
     box-shadow 0.15s,
     transform 0.15s;
 }
+/* Single-line labels: a label too long for the space ellipsizes (full text
+   stays in aria-label / title) instead of wrapping the button taller. */
+.qa-action-btn .btn-label,
+.hub-tab .btn-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .qa-action-btn:hover {
   border-color: var(--color-accent);
   box-shadow: var(--shadow-sm);
   transform: translateY(-1px);
 }
+/* A 2px outline, not the former 25%-alpha box-shadow: blended onto white
+   that ring was ~1.5:1, under WCAG 1.4.11's 3:1. Same fix as .hub-tab. */
 .qa-action-btn:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(28, 74, 130, 0.25);
+  outline: 2px solid var(--color-primary-light);
+  outline-offset: 2px;
 }
 .qa-action-btn i {
   color: var(--color-accent);
@@ -1417,7 +1459,7 @@ a {
     gap: 0;
   }
   .qa-action-btn .btn-label,
-  .hub-tab:not([aria-selected="true"]) .btn-label {
+  .hub-tab:not([aria-selected='true']) .btn-label {
     position: absolute;
     inline-size: 1px;
     block-size: 1px;
@@ -1440,7 +1482,7 @@ a {
   .hub-tab {
     position: relative;
   }
-  .hub-tab:not([aria-selected="true"]) {
+  .hub-tab:not([aria-selected='true']) {
     padding-inline: var(--space-3);
     gap: 0;
   }
@@ -2005,8 +2047,9 @@ a {
   background: transparent;
   color: var(--text-muted);
   font: inherit;
-  font-size: var(--text-sm);
+  font-size: var(--text-control);
   font-weight: 600;
+  line-height: 1.2;
   white-space: nowrap;
   cursor: pointer;
   transition:
@@ -2020,8 +2063,8 @@ a {
    ~1.1:1, far under WCAG 1.4.11's 3:1 for a state indicator, and live
    testing showed a focus ring on the *unselected* tab reading as the
    selection. White text on --color-primary is well above 4.5:1. */
-.hub-tab[aria-selected="true"],
-.hub-tab[aria-selected="true"]:hover {
+.hub-tab[aria-selected='true'],
+.hub-tab[aria-selected='true']:hover {
   background: var(--color-primary);
   color: var(--text-on-dark);
   box-shadow: var(--shadow-sm);
@@ -2274,7 +2317,7 @@ tbody tr:hover {
     border-color 0.15s,
     background 0.15s;
   margin-bottom: 22px;
-  background: var(--surface-hover);
+  background: var(--surface-sunken);
 }
 .dropzone.dragover {
   border-color: var(--color-primary-light);
@@ -2324,7 +2367,7 @@ tbody tr:hover {
   flex-wrap: wrap;
   gap: 10px;
   padding: 12px 14px;
-  background: var(--surface-hover);
+  background: var(--surface-sunken);
 }
 .doc-case-toggle {
   display: flex;
@@ -3024,6 +3067,7 @@ tbody tr:hover {
    must not read as though they sent it themselves. */
 .notif-smart {
   border-inline-start: 3px solid var(--color-accent);
+  padding-inline-start: var(--space-4);
   background: linear-gradient(90deg, #fbf3e8 0%, transparent 60%);
 }
 .smart-tag {

@@ -88,3 +88,33 @@ intended.
 
 **Likely fix.** Drop the call in `renderShell()`; the `handleRoute()` it
 always ends with already covers it.
+
+---
+
+## KI-4 — Focus rings below WCAG 1.4.11 contrast on six components
+
+| | |
+|---|---|
+| **Found** | Item 4 audit (button sizing), Sept 2026 |
+| **Severity** | Medium for accessibility — keyboard users can lose track of focus. No functional effect. |
+| **Pre-existing** | `.btn` and `.doc-case-toggle` predate the overhaul; `.qcp-chip`, `.qcp-tile`, `.astream-row`, `.watched-rail-item` were added in sub-phases 3.2/3.4 copying that same pattern. |
+| **Suggested batch** | Post-overhaul UI polish (deferred: that item's instruction was "no extra CSS polish") |
+
+**Issue.** These `:focus-visible` rules draw
+`box-shadow: 0 0 0 3px rgba(28, 74, 130, 0.25)`. Blended onto a white
+surface that ring is roughly 1.5:1 against its surroundings — WCAG 1.4.11
+asks 3:1 for a focus indicator.
+
+| Line (css/styles.css, at time of logging) | Selector |
+|---|---|
+| ~739 | `.btn:focus-visible` (every button in the app) |
+| ~1236 | `.qcp-chip:focus-visible` |
+| ~1287 | `.qcp-tile:focus-visible` |
+| ~1519 | `.astream-row.astream-clickable:focus-visible` |
+| ~1653 | `.watched-rail-item:focus-visible` |
+| ~2389 | `.doc-case-toggle:focus-visible` |
+
+**Fix, already proven here.** `.hub-tab` and `.qa-action-btn` were moved to
+`outline: 2px solid var(--color-primary-light); outline-offset: 2px;`
+(~8:1 on the page background) during Merge A and Item 4. Apply the same to
+the six rules above; grep for `rgba(28, 74, 130, 0.25)`.
