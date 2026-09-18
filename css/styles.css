@@ -2410,17 +2410,24 @@ tbody tr:hover {
 [dir='rtl'] .doc-case-chevron {
   transform: rotate(180deg);
 }
-.doc-case-title {
+/* Header: the case number only -- the compact identifier to scan a closed
+   list by. The parties (.doc-case-title) live at the top of the body. */
+.doc-case-number {
   flex: 1 1 auto;
   min-width: 0;
   font-weight: 700;
-  font-size: 14px;
-  overflow-wrap: break-word;
+  font-size: var(--text-base);
 }
-.doc-case-title .dc-parties {
-  font-weight: 500;
+/* Body: the case's parties/title as the context line above its documents,
+   divided from the list so it doesn't read as one of the documents. */
+.doc-case-title {
+  margin: var(--space-2) 0 var(--space-2);
+  padding-block-end: var(--space-2);
+  border-block-end: 1px dashed var(--border);
+  font-size: var(--text-sm);
+  font-weight: 600;
   color: var(--text-muted);
-  font-size: 12.5px;
+  overflow-wrap: anywhere;
 }
 .doc-case-count {
   flex-shrink: 0;

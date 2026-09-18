@@ -10,11 +10,11 @@ const ALLOWED_TYPES = ["pdf", "docx", "doc", "jpg", "jpeg", "png"];
 const MAX_SIZE = 25 * 1024 * 1024;
 
 // Which case accordion sections are expanded, keyed by case id. Set once
-// (lazily, to "has documents") the first time a case is rendered, then only
-// ever changed by an explicit user toggle — a later refreshAccordion() (e.g.
+// (lazily, to collapsed) the first time a case is rendered, then only ever
+// changed by an explicit user toggle — a later refreshAccordion() (e.g.
 // after an upload/delete) must never silently re-open or re-close a section
-// the user already decided about, which a plain "open if it has docs" rule
-// recomputed on every render would do.
+// the user already decided about. Cleared in destroy(), so each visit to the
+// page starts with every section collapsed.
 let caseOpenState = new Map();
 
 export function destroy() {
@@ -199,8 +199,7 @@ export async function render(container, user) {
     // Every case the user can see gets a section — including ones with zero
     // documents yet, since that's exactly where "Add New Document" needs to
     // be discoverable. Cases with documents already sort first (more useful
-    // by default); first-visit sections auto-expand only when they have
-    // something to show.
+    // by default); every section starts collapsed.
     const casesWithDocs = cases.filter((c) => docsByCase.has(c.id));
     const casesWithoutDocs = cases.filter((c) => !docsByCase.has(c.id));
     const orderedCases = [...casesWithDocs, ...casesWithoutDocs];
@@ -287,22 +286,33 @@ export async function render(container, user) {
   }
 
   function renderCaseGroup(c, docs, lang, canAdd) {
-    if (!caseOpenState.has(c.id)) caseOpenState.set(c.id, docs.length > 0);
+    // Collapsed by default: every section starts closed and the user opens
+    // what they need. A section they toggle keeps that state for the rest of
+    // this visit (caseOpenState, see its comment at the top of this file).
+    if (!caseOpenState.has(c.id)) caseOpenState.set(c.id, false);
     const isOpen = caseOpenState.get(c.id);
-    const parties = lang === "ar" ? c.parties_ar : c.parties_en;
+    const parties = (lang === "ar" ? c.parties_ar : c.parties_en) || c.parties_ar || "";
+    const caseNumber = `${c.case_number}/${c.case_year}`;
     const countLabel = docs.length === 1 ? t("documents_count_one") : `${docs.length} ${t("documents_count_other")}`;
+    // The header shows only the case number (the compact, scannable
+    // identifier); the parties moved into the body. The accessible name
+    // keeps both, starting with the visible number (WCAG 2.5.3 label in
+    // name), so a collapsed row is never announced as a bare number.
+    const toggleName = parties ? `${caseNumber} — ${parties}` : caseNumber;
 
     return `
       <div class="doc-case-group${isOpen ? " open" : ""}" data-case-group="${c.id}">
         <div class="doc-case-header">
-          <button type="button" class="doc-case-toggle" data-toggle-case="${c.id}" aria-expanded="${isOpen}" aria-controls="doc-case-body-${c.id}">
-            <span class="doc-case-chevron">${icon("chevron-right")}</span>
-            <span class="doc-case-title">${c.case_number}/${c.case_year}${parties ? ` <span class="dc-parties">— ${escapeHtml(parties)}</span>` : ""}</span>
+          <button type="button" class="doc-case-toggle" data-toggle-case="${c.id}" aria-expanded="${isOpen}" aria-controls="doc-case-body-${c.id}"
+                  aria-label="${escapeHtml(toggleName)}" title="${escapeHtml(toggleName)}">
+            <span class="doc-case-chevron" aria-hidden="true">${icon("chevron-right")}</span>
+            <span class="doc-case-number">${caseNumber}</span>
           </button>
           <span class="badge badge-muted doc-case-count" title="${countLabel}" aria-label="${countLabel}">${docs.length}</span>
           ${canAdd ? `<button type="button" class="btn btn-outline btn-sm" data-add-case="${c.id}" title="${t("documents_add_to_case")}" aria-label="${t("documents_add_to_case")}">${icon("plus")}</button>` : ""}
         </div>
         <div class="doc-case-body" id="doc-case-body-${c.id}" ${isOpen ? "" : "hidden"}>
+          ${parties ? `<p class="doc-case-title">${escapeHtml(parties)}</p>` : ""}
           ${docs.length === 0 ? renderEmptyCase(c, canAdd) : docs.map((d) => renderDocItem(d, c.id, canAdd)).join("")}
         </div>
       </div>`;

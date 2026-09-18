@@ -676,10 +676,12 @@ staff members available to ask"*.
 **Menu entry:** Document Center. Page heading: *Document Locker & Upload
 Center*.
 
-Documents are grouped **by case**. Each case is a row you can expand and
-collapse (tooltip: *"Show/hide this case's documents"*), showing how many
-documents it holds — *1 document*, or *5 documents*. A case with none shows
-**"No documents for this case yet"**.
+Documents are grouped **by case**. Each case is a row showing its **case
+number** and how many documents it holds — *1 document*, or *5 documents*.
+Every row starts **collapsed**; click one to open it (hover to see the case's
+parties without opening it). An opened case shows its parties at the top,
+then its documents. A row you open stays open until you leave the page. A
+case with no documents shows **"No documents for this case yet"**.
 
 If you arrived by clicking the **Pending Documents** box on the Dashboard, only
 pending documents are listed.
