@@ -128,3 +128,32 @@ asks 3:1 for a focus indicator.
 `outline: 2px solid var(--color-primary-light); outline-offset: 2px;`
 (~8:1 on the page background) during Merge A and Item 4. Apply the same to
 the six rules above; grep for `rgba(28, 74, 130, 0.25)`.
+
+---
+
+## KI-5 — Arabic notifications contain English task titles
+
+| | |
+|---|---|
+| **Found** | Final live verification (Arabic sweep of Notifications), Sept 2026 |
+| **Severity** | Low — cosmetic i18n inconsistency; the content is still understandable. |
+| **Pre-existing** | Yes — the text comes from stored data, not from anything the overhaul changed. |
+| **Suggested batch** | i18n polish batch (post-overhaul) |
+
+**Observation.** In Arabic, notifications about status-update requests read
+e.g. `فات موعد المهمة: Status update requested for case 1123/2024 — …`: the
+surrounding sentence is translated, the task title inside it is not.
+
+**Cause.** Task titles are stored in the database as free text at creation
+time, and the notification templates embed them verbatim. The English text
+seen here specifically is the server's default note:
+`backend/app/routers/search.py` (request-status-update endpoint) stores
+`f"Status update requested for case {case_label}"` in `CaseReminder.note`
+whenever the requester leaves the message blank, regardless of language.
+A title the user typed is legitimately in whatever language they typed it.
+
+**Suggested fix.** Store a language-agnostic key (plus the case label) for
+system-generated titles and render it per language at display time, or keep
+per-language title fields on reminders. Leave user-typed titles as typed.
+
+**Why deferred.** Out of scope for the UI overhaul; logged by review decision.
