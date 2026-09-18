@@ -81,6 +81,7 @@ def _case_to_out(c: Case) -> CaseOut:
         assigned_lawyer_name_ar=c.assigned_lawyer.name_ar if c.assigned_lawyer else None,
         assigned_lawyer_name_en=c.assigned_lawyer.name_en if c.assigned_lawyer else None,
         summary_ar=c.summary_ar, summary_en=c.summary_en, next_hearing_at=c.next_hearing_at,
+        created_at=c.created_at,
     )
 
 

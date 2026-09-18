@@ -137,6 +137,9 @@ class CaseOut(BaseModel):
     summary_en: str | None
     next_hearing_at: datetime | None
     is_watching: bool = False
+    # Added for the Dashboard's Case Filing Trend sparkline (Sub-phase 3.4) —
+    # the column has always existed on the ORM model, this just surfaces it.
+    created_at: datetime
 
 
 class CaseDetailOut(CaseOut):
