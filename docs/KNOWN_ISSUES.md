@@ -181,3 +181,38 @@ final sweep, Admin and Client) reproduced it.
 **If it recurs.** Check what the language preference read at the moment the
 frame's app booted; investigate then, per the review decision not to chase
 an unreproducible artifact.
+
+---
+
+# Post-Overhaul Follow-Up
+
+Verification and documentation gaps left open when the overhaul was accepted
+(see `docs/FINAL_ACCEPTANCE_REPORT.md` §5 and §7). These are not known
+defects. They are checks that were not run and a doc that was not updated,
+and they are out of scope for the accepting session by review decision
+(2026-09-19).
+
+## FO-1 — 2560px and 4K viewport verification
+
+| | |
+|---|---|
+| **Gap** | The overhauled pages were verified up to 1366px, with button-label checks up to 1920px. Nothing was rendered at 2560px or 4K. |
+| **Why untested** | No 4K hardware; the browser tool's `resize_window` never changes the viewport, so widths were simulated with a fixed-width embedded frame. |
+| **Risk** | Low but unverified: wide screens rely on `--content-max-lg` widening the existing layout, not on a layout (topology) change. |
+| **To close** | Render Dashboard, Cases (both tabs), Notifications (both tabs) and Document Center at 2560×1440 and 3840×2160, EN and AR. Check content width, no stretched rows, no overflow. |
+
+## FO-2 — Lawyer, Consultant and Delegate role verification
+
+| | |
+|---|---|
+| **Gap** | Only Admin and Client were verified live. |
+| **Risk** | Low: the merged hubs gate their sections with `visibleSections()`, which works the same for every role, and Admin (sees both tabs) and Client (sees one, no tab bar) cover both outcomes. These three roles were still not checked visually. |
+| **To close** | Log in as each role; confirm the sidebar, which hub tabs show, the Dashboard quick actions, and that no request is refused with 403 in the network log. EN and AR. |
+
+## FO-3 — Update `docs/REVERT_UI_OVERHAUL.md`
+
+| | |
+|---|---|
+| **Gap** | The runbook was last updated with the Merge B commit (`a2b49f7`). It covers both hubs and the shared `js/hub.js`, including the order to revert them in. It predates everything after that: responsive buttons, clamp fonts, Items 1–9, X1/X2, Decisions A/B, and Tier 2. |
+| **Risk** | Someone reverting today would have no guidance for those later commits. Most are small single-purpose commits that `git revert` cleanly on their own. The exception is Decision A (`7563f78`): it changes the backend, so reverting it needs a worker restart (app-pool recycle), and its tests revert with it. |
+| **To close** | Add the post-Merge-B commits to the runbook's per-task table with their revert notes and ordering. |
