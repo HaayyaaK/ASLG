@@ -105,7 +105,15 @@ function renderLogin() {
   stopIdleTimer();
   activePage = null;
   loginPage.render(root, (user) => {
-    location.hash = "#/dashboard";
+    // Not `location.hash = ...`: by the time this callback runs, the click
+    // that submitted the login form has already resolved through an
+    // awaited fetch, so the browser's transient user-activation window has
+    // expired -- a plain hash assignment here is what Chrome/Edge flag as
+    // "a session history item was added ... without any interaction from
+    // the user". replaceState sets the same URL without adding a history
+    // entry, so there's nothing to flag; renderShell() below calls
+    // handleRoute() itself regardless, so routing is unaffected.
+    history.replaceState(null, "", "#/dashboard");
     renderShell(user);
   });
 }
