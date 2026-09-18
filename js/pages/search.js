@@ -56,7 +56,6 @@ export async function render(container, user) {
       </div>
     </div>
     ${getPermission("official_sync") !== "none" ? officialSyncPanelSkeleton() : ""}
-    ${usefulWebsitesPanel()}
   `;
 
   container.querySelectorAll("[data-tab]").forEach((btn) => {
@@ -209,60 +208,6 @@ async function wireOfficialSyncPanel(container) {
 }
 
 /**
- * Official Kuwait government portals a lawyer actually needs day to day.
- *
- * These are the real published domains — nothing here is invented, and each
- * opens the genuine site in a new tab so the user never loses their place in
- * the case they were working on. Placed on the Official Search Engine page
- * because that is already where staff come to look something up externally;
- * the application had no "useful links" section before, so this creates one
- * rather than duplicating an existing feature.
- */
-const KUWAIT_WEBSITES = [
-  {
-    url: "https://www.moj.gov.kw",
-    name_en: "Ministry of Justice", name_ar: "وزارة العدل",
-    services_en: "Cases, hearings, real-estate registration, lawyer services",
-    services_ar: "القضايا والجلسات والتسجيل العقاري وخدمات المحامين",
-    benefit_en: "Follow up on cases and complete judicial transactions",
-    benefit_ar: "متابعة القضايا وإنجاز المعاملات القضائية",
-    icon: "scale-balanced",
-  },
-  {
-    // The commonly-quoted host "tawtheeq.moj.gov.kw" does not resolve (DNS
-    // NXDOMAIN as of this build), so linking it would give lawyers a dead
-    // link. Tawtheeq's power-of-attorney services are reached through the
-    // Ministry of Justice's e-services portal, which is verified reachable.
-    url: "https://eservices.moj.gov.kw",
-    name_en: "E-Services of MOJ", name_ar: "توثيق — الخدمات الإلكترونية للعدل",
-    services_en: "Issuing and cancelling powers of attorney, verifying validity",
-    services_ar: "إصدار وإلغاء الوكالات والتحقق من صلاحيتها",
-    benefit_en: "Handle power-of-attorney procedures electronically",
-    benefit_ar: "تسهيل إجراءات الوكالات إلكترونياً",
-    icon: "file-signature",
-  },
-  {
-    url: "https://www.paci.gov.kw",
-    name_en: "Public Authority for Civil Information", name_ar: "الهيئة العامة للمعلومات المدنية",
-    services_en: "Civil ID data",
-    services_ar: "بيانات البطاقة المدنية",
-    benefit_en: "Verify a client's identity",
-    benefit_ar: "التحقق من هوية العملاء",
-    icon: "id-card",
-  },
-  {
-    url: "https://www.csc.gov.kw",
-    name_en: "Civil Service Commission", name_ar: "ديوان الخدمة المدنية",
-    services_en: "Regulations and government jobs",
-    services_ar: "اللوائح والوظائف الحكومية",
-    benefit_en: "Administrative and legal reference",
-    benefit_ar: "مرجع إداري وقانوني",
-    icon: "building-columns",
-  },
-];
-
-
-/**
  * The case a related record (session / expert / execution) belongs to, shown
  * on the result itself.
  *
@@ -279,29 +224,6 @@ function caseCell(r) {
     <div class="text-muted" style="font-size:11.5px;">
       ${escapeHtml(lang === "ar" ? r.case_parties_ar : (r.case_parties_en || r.case_parties_ar))}<br>
       ${escapeHtml(lang === "ar" ? r.case_court_ar : r.case_court_en)}${r.case_status === "closed" ? ` • <span class="badge badge-muted">${t("stage_closed")}</span>` : ""}
-    </div>`;
-}
-
-function usefulWebsitesPanel() {
-  const lang = getLang();
-  return `
-    <div class="panel">
-      <div class="panel-header"><h3>${icon("link")} ${t("useful_websites")}</h3></div>
-      <div class="panel-body">
-        <p class="text-muted mt-0">${t("useful_websites_hint")}</p>
-        <div class="useful-links">
-          ${KUWAIT_WEBSITES.map((s) => `
-            <a class="useful-link" href="${s.url}" target="_blank" rel="noopener noreferrer">
-              <div class="ul-icon">${icon(s.icon)}</div>
-              <div class="ul-body">
-                <div class="ul-name">${escapeHtml(lang === "ar" ? s.name_ar : s.name_en)} ${icon("arrow-up-right-from-square", "ul-ext")}</div>
-                <div class="ul-services">${escapeHtml(lang === "ar" ? s.services_ar : s.services_en)}</div>
-                <div class="ul-benefit">${icon("circle-check")} ${escapeHtml(lang === "ar" ? s.benefit_ar : s.benefit_en)}</div>
-                <div class="ul-url">${s.url.replace(/^https:\/\//, "")}</div>
-              </div>
-            </a>`).join("")}
-        </div>
-      </div>
     </div>`;
 }
 

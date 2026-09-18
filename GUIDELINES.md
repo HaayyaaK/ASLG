@@ -310,6 +310,61 @@ If there is nothing urgent, the panel says **"No urgent hearings"**.
 
 **Printing.** **Print** at the top of the page produces a one-page briefing: the eight figures, then the Critical Upcoming Hearings list with each hearing's Kuwait date and time. See [1.7](#17-printing).
 
+### Useful Kuwait Websites
+
+Below Critical Upcoming Hearings is the **Useful Kuwait Websites** panel —
+direct links to official Kuwaiti authorities, each with a cover image so the
+site is recognizable at a glance. They open in a new tab, so you do not lose
+your place.
+
+| Website | Address | What it offers | Why it helps |
+|---|---|---|---|
+| **Ministry of Justice** | www.moj.gov.kw | Cases, hearings, real-estate registration, lawyer services | Follow up on cases and complete judicial transactions |
+| **E-Services of MOJ** | eservices.moj.gov.kw | Issuing and cancelling powers of attorney, verifying validity | Handle power-of-attorney procedures electronically |
+| **Public Authority for Civil Information** | www.paci.gov.kw | Civil ID data | Verify a client's identity |
+| **Civil Service Commission** | www.csc.gov.kw | Regulations and government jobs | Administrative and legal reference |
+
+These are external government sites run by the Kuwaiti authorities, not part of
+this system. ASLG does not control their availability or their content.
+
+### Quick Actions, Action Stream, and the other new Dashboard widgets
+
+Below the boxes, the Dashboard is arranged as a wide main area and a narrower
+side column (on a phone or narrow tablet, the side column simply moves below
+the main one — nothing is hidden).
+
+**Quick Actions** — a row of buttons, right below the page title. You only
+ever see the ones your role can use:
+
+| Button | What it does |
+|---|---|
+| **New Case** | Takes you to Cases, ready to press New Case |
+| **Assign a Task** | Takes you to Reminders & Follow-ups |
+| **Mark All Notifications Read** | Marks every notification read, right there — no page change |
+| **Request Case Update** | Pick a case, then send the usual Request Update ask |
+| **Check Official Portal** | Takes you to the Official Search Engine |
+| **Sync Deadlines Now** | Refreshes the Deadlines figures immediately |
+
+**Quick search (Ctrl+K)** — a button beside the page title (or the Ctrl+K
+keyboard shortcut while the Dashboard is open) opens a small search box.
+Type to jump straight to any page you have access to, any of the Quick
+Actions above, or any case by number or party name — press Enter or click a
+result to go there.
+
+**Action Stream.** One combined, most-urgent-first list of your notifications
+and your open tasks, so you don't have to check two places. Overdue tasks
+show first, then tasks due within a few days, then everything else with the
+newest at the top. Click a task that names a case to open that case directly.
+
+**My Week.** How many tasks are due in the next 7 days, how many you've
+finished in the last 7 days, and a small progress bar. Only shown if your
+role uses Reminders & Follow-ups.
+
+**Watched Cases.** Every case you are currently watching (the same bookmark
+as **Watch Case** in Case Details or **Track** on the Official Search
+Engine), with its next hearing time if one is scheduled. Click one to open
+it.
+
 ---
 
 ## 2.2 Official Search Engine
@@ -413,22 +468,6 @@ If the reply-by date is missing or in the past you are told
 (*"Please choose a reply-by date"* / *"The reply-by date must be in the
 future"*). If no colleague is available to ask, the dialog says *"There are no
 staff members available to ask"*.
-
-### Useful Kuwait Websites
-
-At the bottom of the page is the **Useful Kuwait Websites** panel — direct links
-to official Kuwaiti authorities. They open in a new tab, so you do not lose your
-place.
-
-| Website | Address | What it offers | Why it helps |
-|---|---|---|---|
-| **Ministry of Justice** | www.moj.gov.kw | Cases, hearings, real-estate registration, lawyer services | Follow up on cases and complete judicial transactions |
-| **E-Services of MOJ** | eservices.moj.gov.kw | Issuing and cancelling powers of attorney, verifying validity | Handle power-of-attorney procedures electronically |
-| **Public Authority for Civil Information** | www.paci.gov.kw | Civil ID data | Verify a client's identity |
-| **Civil Service Commission** | www.csc.gov.kw | Regulations and government jobs | Administrative and legal reference |
-
-These are external government sites run by the Kuwaiti authorities, not part of
-this system. ASLG does not control their availability or their content.
 
 **Printing.** Once a search returns results, a **Print** button appears beside **Results**. It prints the criteria you searched on and the rows that came back — the current tab only. See [1.7](#17-printing).
 

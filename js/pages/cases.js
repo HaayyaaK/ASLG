@@ -33,6 +33,7 @@ import {
 } from '../ui.js';
 import { canRequestUpdate, openRequestUpdateDialog } from '../request-update.js';
 import { printRecord, printButton } from '../print.js';
+import { recordRecentlyViewed } from '../recently-viewed.js';
 
 const STAGES = ['new', 'prep', 'pleading', 'judgment', 'execution', 'closed'];
 let filters = { status: '', lawyer: '' };
@@ -270,6 +271,7 @@ export async function openCaseDetail(caseId, user) {
       `<p class="text-muted">${escapeHtml(err.message)}</p>`;
     return;
   }
+  recordRecentlyViewed({ id: c.id, case_number: c.case_number, case_year: c.case_year, parties_ar: c.parties_ar, parties_en: c.parties_en });
 
   const lang = getLang();
   const perm = getPermission('cases');
