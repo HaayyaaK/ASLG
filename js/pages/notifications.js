@@ -1,5 +1,5 @@
 import { t, getLang } from '../i18n.js';
-import { listNotifications, markNotificationRead, markAllNotificationsRead } from '../api.js';
+import { listNotificationsCached, markNotificationRead, markAllNotificationsRead } from '../api.js';
 import { formatDate, icon, toast, escapeHtml, isSmartNudge } from '../ui.js';
 import { printRecord, printButton } from '../print.js';
 
@@ -53,7 +53,9 @@ export async function render(container, user) {
     const listEl = container.querySelector('#notif-list');
     let notifs;
     try {
-      notifs = await listNotifications();
+      // Cached (60s) for tab switches; mark-read / mark-all invalidate it,
+      // so the refresh() after either always sees the change.
+      notifs = await listNotificationsCached();
     } catch (err) {
       listEl.innerHTML = `<p class="text-muted">${err.message}</p>`;
       return;

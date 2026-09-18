@@ -263,7 +263,9 @@ export const importRecord = (sourceType, sourceRefId, watch = true) =>
 export const listTracked = () => request("/search/tracked");
 export const untrackCase = (caseId) => invalidatingCases(request(`/search/track/${caseId}`, { method: "DELETE" }));
 export const listAssignableStaff = () => request("/search/assignable-staff");
-export const requestStatusUpdate = (payload) => request("/search/request-update", { method: "POST", body: payload });
+// Creates a real reminder (and, with also_track, a watch on the case).
+export const requestStatusUpdate = (payload) =>
+  invalidating(["reminders", "notifications", "cases"], request("/search/request-update", { method: "POST", body: payload }));
 
 // ---------------- Documents ----------------
 export const listDocuments = () => request("/documents");
@@ -288,13 +290,20 @@ export const myUploadAccess = () => request("/documents/my-upload-access");
 
 // ---------------- Notifications ----------------
 export const listNotifications = () => request("/notifications");
-export const markNotificationRead = (id) => request(`/notifications/${id}/read`, { method: "PUT" });
-export const markAllNotificationsRead = () => request("/notifications/read-all", { method: "PUT" });
+export const listNotificationsCached = () => cachedList("notifications", listNotifications);
+export const markNotificationRead = (id) => invalidating(["notifications"], request(`/notifications/${id}/read`, { method: "PUT" }));
+export const markAllNotificationsRead = () => invalidating(["notifications"], request("/notifications/read-all", { method: "PUT" }));
 
 // ---------------- Reminders ----------------
 export const listReminders = () => request("/reminders");
-export const createReminder = (payload) => request("/reminders", { method: "POST", body: payload });
-export const resolveReminder = (id, status) => request(`/reminders/${id}/resolve`, { method: "PUT", body: { status } });
+export const listRemindersCached = () => cachedList("reminders", listReminders);
+// Creating or resolving a task also writes notifications (to the assignee /
+// the assigner), and marking a status-update request Done advances the case
+// stage -- so each invalidates every list it can change, not just reminders.
+export const createReminder = (payload) =>
+  invalidating(["reminders", "notifications"], request("/reminders", { method: "POST", body: payload }));
+export const resolveReminder = (id, status) =>
+  invalidating(["reminders", "notifications", "cases"], request(`/reminders/${id}/resolve`, { method: "PUT", body: { status } }));
 export const listAssignableUsers = () => request("/reminders/assignable-users");
 
 // ---------------- Dashboard ----------------

@@ -7,8 +7,7 @@ import * as loginPage from "./pages/login.js";
 import * as dashboardPage from "./pages/dashboard.js";
 import * as casesHubPage from "./pages/cases-hub.js";
 import * as documentsPage from "./pages/documents.js";
-import * as notificationsPage from "./pages/notifications.js";
-import * as remindersPage from "./pages/reminders.js";
+import * as notificationsHubPage from "./pages/notifications-hub.js";
 import * as usersPage from "./pages/users.js";
 import * as activityLogPage from "./pages/activity-log.js";
 import * as deadlinesPage from "./pages/deadlines.js";
@@ -21,9 +20,11 @@ const ROUTES = [
   // ROUTE_ALIASES below.
   { path: "cases", perm: "cases", icon: "folder-open", label: "nav_cases", shortLabel: "nav_cases", page: casesHubPage },
   { path: "documents", perm: "documents", icon: "file-lines", label: "nav_documents", shortLabel: "nav_documents_short", page: documentsPage },
-  { path: "reminders", perm: "reminders", icon: "clock-rotate-left", label: "nav_reminders", shortLabel: "nav_reminders_short", page: remindersPage },
   { path: "deadlines", perm: "deadlines", icon: "hourglass-half", label: "nav_deadlines", shortLabel: "nav_deadlines_short", page: deadlinesPage },
-  { path: "notifications", perm: "notifications", icon: "bell", label: "nav_notifications", shortLabel: "nav_notifications_short", page: notificationsPage },
+  // One entry for both "Notifications" and "Reminders & Follow-ups" -- tabs
+  // inside js/pages/notifications-hub.js. Old #/reminders links are
+  // rewritten by ROUTE_ALIASES below.
+  { path: "notifications", perm: "notifications", icon: "bell", label: "nav_notifications", shortLabel: "nav_notifications_short", page: notificationsHubPage },
   { path: "users", perm: "users", icon: "user-gear", label: "nav_users", shortLabel: "nav_users_short", page: usersPage },
   // Reuses the "users" permission key on purpose: only the Admin role has
   // non-"none" access to it today, which is exactly the "IT Admin only"
@@ -301,6 +302,8 @@ async function refreshNotifBadge() {
  */
 const ROUTE_ALIASES = {
   search: () => "cases/search",
+  // The filter segment survives: #/reminders/overdue -> #/notifications/reminders/overdue
+  reminders: (rest) => ["notifications", "reminders", ...rest].filter(Boolean).join("/"),
 };
 
 /** Rewrites an aliased hash in place. replaceState, not a hash assignment:

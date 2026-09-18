@@ -112,15 +112,25 @@ export function escapeHtml(str) {
 }
 
 /**
- * The segment after the page name in the hash, e.g. "#/reminders/overdue"
- * yields "overdue". Used by the Dashboard's stat cards to open a destination
- * page already filtered to the exact rows the number counted.
+ * Hub pages (js/hub.js) whose non-default tabs occupy the segment after the
+ * page name: in "#/notifications/reminders/overdue" the "reminders" names a
+ * tab, so the filter is the segment after it.
+ */
+const HUB_TAB_SEGMENTS = { cases: ["search"], notifications: ["reminders"] };
+
+/**
+ * The page's filter segment, e.g. "#/documents/pending" -> "pending",
+ * "#/notifications/reminders/overdue" -> "overdue". Used by the Dashboard's
+ * stat cards to open a destination already filtered to the exact rows the
+ * number counted.
  *
- * app.js's router only reads the FIRST segment when picking a page, so this
- * extra segment is free to carry intent without needing new routes.
+ * app.js's router only reads the FIRST segment when picking a page, so the
+ * extra segments are free to carry intent without needing new routes.
  */
 export function routeFilter() {
-  return location.hash.replace(/^#\//, "").split("/")[1] || "";
+  const segs = location.hash.replace(/^#\//, "").split("/");
+  const tabSegment = HUB_TAB_SEGMENTS[segs[0]]?.includes(segs[1]);
+  return segs[tabSegment ? 2 : 1] || "";
 }
 
 /**

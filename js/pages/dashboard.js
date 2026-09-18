@@ -43,10 +43,11 @@ const CARD_TARGETS = {
   pending_documents: { route: "documents", filter: "pending" },
   today_hearings: { route: "cases", filter: "today-hearings" },
   active_cases: { route: "cases", filter: "active" },
-  my_open_tasks: { route: "reminders", filter: "mine-open" },
-  overdue_tasks: { route: "reminders", filter: "overdue" },
-  pending_status_requests: { route: "reminders", filter: "status-requests" },
-  tasks_i_assigned: { route: "reminders", filter: "assigned-by-me" },
+  // Reminders & Follow-ups is a tab of the Notifications hub (Merge B).
+  my_open_tasks: { route: "notifications/reminders", filter: "mine-open" },
+  overdue_tasks: { route: "notifications/reminders", filter: "overdue" },
+  pending_status_requests: { route: "notifications/reminders", filter: "status-requests" },
+  tasks_i_assigned: { route: "notifications/reminders", filter: "assigned-by-me" },
   deadlines_due_week: { route: "deadlines", filter: "" },
   deadlines_overdue: { route: "deadlines", filter: "" },
   deadlines_provisional: { route: "deadlines", filter: "" },
@@ -250,7 +251,7 @@ export async function render(container, user) {
     location.hash = "#/cases";
   }
   function handleAssignTask() {
-    location.hash = "#/reminders";
+    location.hash = "#/notifications/reminders";
   }
   function handleCheckPortal() {
     location.hash = "#/cases/search";
@@ -293,7 +294,8 @@ export async function render(container, user) {
       // A tab inside Cases now, not its own page; still worth a direct entry.
       { route: "cases/search", labelKey: "nav_search", icon: "magnifying-glass", perm: "search" },
       { route: "documents", labelKey: "nav_documents", icon: "file-lines", perm: "documents" },
-      { route: "reminders", labelKey: "nav_reminders", icon: "clock-rotate-left", perm: "reminders" },
+      // A tab inside Notifications now, not its own page; still worth a direct entry.
+      { route: "notifications/reminders", labelKey: "nav_reminders", icon: "clock-rotate-left", perm: "reminders" },
       { route: "deadlines", labelKey: "nav_deadlines", icon: "hourglass-half", perm: "deadlines" },
       { route: "notifications", labelKey: "nav_notifications", icon: "bell", always: true },
       { route: "users", labelKey: "nav_users", icon: "user-gear", perm: "users" },

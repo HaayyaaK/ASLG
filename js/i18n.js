@@ -32,7 +32,6 @@ const dict = {
     nav_documents_short: 'المستندات',
     nav_notifications_short: 'التنبيهات',
     nav_users_short: 'المستخدمون',
-    nav_reminders_short: 'التذكيرات',
     nav_activity_log_short: 'السجل',
     tab_case_number_short: 'رقم القضية',
     tab_sessions_short: 'الجلسات',
@@ -503,6 +502,7 @@ const dict = {
     cases_tab_mine: 'قضاياي',
     cases_hub_tabs_label: 'أقسام صفحة القضايا',
     hub_tab_refresh_hint: 'انقر للتحديث',
+    notifications_hub_tabs_label: 'أقسام صفحة التنبيهات',
   },
   en: {
     app_name: 'Al Saif Legal Group',
@@ -535,9 +535,8 @@ const dict = {
     nav_activity_log: 'Activity Log',
     nav_dashboard_short: 'Dashboard',
     nav_documents_short: 'Documents',
-    nav_notifications_short: 'Alerts',
+    nav_notifications_short: 'Notifications',
     nav_users_short: 'Users',
-    nav_reminders_short: 'Reminders',
     nav_activity_log_short: 'Log',
     tab_case_number_short: 'Case #',
     tab_sessions_short: 'Sessions',
@@ -1010,6 +1009,7 @@ const dict = {
     cases_tab_mine: 'My Cases',
     cases_hub_tabs_label: 'Cases page sections',
     hub_tab_refresh_hint: 'click to refresh',
+    notifications_hub_tabs_label: 'Notifications page sections',
   },
 };
 

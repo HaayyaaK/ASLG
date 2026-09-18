@@ -1,5 +1,5 @@
 import { t, getLang } from "../i18n.js";
-import { listReminders, resolveReminder, listCases, createReminder, listAssignableUsers, getPermission } from "../api.js";
+import { listRemindersCached, resolveReminder, listCases, createReminder, listAssignableUsers, getPermission } from "../api.js";
 import { formatDate, icon, toast, escapeHtml, openModal, closeModal, routeFilter, parseServerDate, requiredNote } from "../ui.js";
 import { printRecord, printButton } from "../print.js";
 
@@ -48,7 +48,7 @@ export async function render(container, user) {
     <div class="panel"><div class="panel-body" id="reminders-list"><p class="text-muted">${icon("spinner", "fa-spin")}</p></div></div>
   `;
 
-  container.querySelector("#clear-filter")?.addEventListener("click", () => { location.hash = "#/reminders"; });
+  container.querySelector("#clear-filter")?.addEventListener("click", () => { location.hash = "#/notifications/reminders"; });
 
   // The task list exactly as filtered on screen, kept for Print.
   let visibleReminders = [];
@@ -100,7 +100,9 @@ export async function render(container, user) {
     const listEl = container.querySelector("#reminders-list");
     let reminders;
     try {
-      reminders = await listReminders();
+      // Cached (60s) for tab switches; resolve/create invalidate it, so the
+      // refresh() after an action below always sees the change.
+      reminders = await listRemindersCached();
     } catch (err) {
       listEl.innerHTML = `<p class="text-muted">${escapeHtml(err.message)}</p>`;
       return;

@@ -60,8 +60,31 @@ tab selection unchanged.
 application. Re-test manually with a real keyboard if it is ever reported by
 a user.
 
-**Related fix made while investigating.** Arrow keys were computed relative
+**Related fix made while investigating (KI-2).** Arrow keys were computed relative
 to the *selected* tab; WAI-ARIA defines them relative to the *focused* tab.
 The two only differ when focus is placed on an unselected (`tabindex=-1`)
 tab programmatically, so no keyboard user could hit it, but the handler now
 follows the focused tab.
+
+---
+
+## KI-3 — Every full shell render requests `/api/notifications` twice for the bell badge
+
+| | |
+|---|---|
+| **Found** | Merge B verification (Notifications hub), Sept 2026 |
+| **Severity** | Low — one redundant read request per page load / language switch. No functional effect. |
+| **Pre-existing** | Yes — both calls predate the overhaul. Not a merge regression. |
+| **Suggested batch** | Post-overhaul UI polish |
+
+**Observation.** Loading any page in a fresh tab records the badge request
+twice before the page's own data requests (on the Notifications page, three
+`/api/notifications` requests in total: two for the badge, one for the list).
+
+**Cause.** `js/app.js::renderShell()` calls `refreshNotifBadge()` and then
+calls `handleRoute()`, which calls `refreshNotifBadge()` again. Ordinary
+navigation (which goes through `handleRoute()` alone) makes one request, as
+intended.
+
+**Likely fix.** Drop the call in `renderShell()`; the `handleRoute()` it
+always ends with already covers it.

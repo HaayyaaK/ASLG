@@ -35,8 +35,8 @@ everywhere.
 - [2.2 Cases](#22-cases)
 - [2.3 Cases → Official Search Engine tab](#23-cases--official-search-engine-tab)
 - [2.4 Document Center](#24-document-center)
-- [2.5 Reminders & Follow-ups](#25-reminders--follow-ups)
-- [2.6 Notifications](#26-notifications)
+- [2.5 Notifications](#25-notifications)
+- [2.6 Notifications → Reminders & Follow-ups tab](#26-notifications--reminders--follow-ups-tab)
 - [2.7 Users & Permissions](#27-users--permissions) *(System Admin only)*
 - [2.8 Activity Log](#28-activity-log) *(System Admin only)*
 - [2.9 Procedural Intelligence — Deadlines & the Procedure tab](#29-procedural-intelligence--deadlines--the-procedure-tab)
@@ -88,8 +88,7 @@ pages your role is allowed to open, always in this order:
 | **Dashboard** | Your daily summary and the hearings coming up |
 | **Cases** | The firm's case list, case details, notes and stage — plus the **Official Search Engine** tab for looking up cases, sessions, experts and execution files |
 | **Document Center** | Upload, preview and download case documents |
-| **Reminders & Follow-ups** | Tasks you owe other people and they owe you |
-| **Notifications** | Every alert the system has sent you |
+| **Notifications** | Every alert the system has sent you — plus the **Reminders & Follow-ups** tab for the tasks you owe other people and they owe you |
 | **Users & Permissions** | Manage accounts *(System Admin only)* |
 | **Activity Log** | The audit trail *(System Admin only)* |
 
@@ -227,7 +226,7 @@ right-to-left Arabic sheet, print in English and you get an English one.
 | Cases | The case list exactly as you have filtered it |
 | Cases → **Case details** | The full case record: number, court, lawyer, stage, parties, summary, timeline and every note |
 | Document Center | The document register: which case, file name, size, review status, upload date |
-| Reminders & Follow-ups | Your task list as filtered, with due dates, assignees and status |
+| Notifications → Reminders & Follow-ups tab | Your task list as filtered, with due dates, assignees and status |
 | Notifications | Your own notification history |
 | Activity Log | The audit trail *(System Admin only)* |
 
@@ -802,9 +801,74 @@ and upload recorded in the Activity Log.
 
 ---
 
-## 2.5 Reminders & Follow-ups
+## 2.5 Notifications
 
-**Menu entry:** Reminders & Follow-ups. This is the firm's task list.
+**Menu entry:** Notifications. This one page has two tabs across the top:
+
+| Tab | What it holds |
+|---|---|
+| **Notifications** | Every alert the system has sent you — described in this section |
+| **Reminders & Follow-ups** | The firm's task list — see [2.6](#26-notifications--reminders--follow-ups-tab) |
+
+**Clients see only Notifications** — the Reminders & Follow-ups tab is not
+shown to them at all. Switching between the tabs keeps your place in each.
+
+**To refresh a tab, click it** — even if you are already on it. A small
+spinner shows on the tab while it reloads.
+
+Old bookmarks to Reminders & Follow-ups still work — they open this page on
+that tab, with any filter they carried.
+
+### The Notifications tab
+
+Page heading:
+*Notification Center*.
+
+The complete list of alerts sent to you, newest first. Unread ones are
+highlighted. Click one to mark it read, or press **Mark all as read** to clear
+them all at once.
+
+The **bell** in the title bar carries the unread count and opens this page when
+clicked. This page is the only place notifications are displayed.
+
+Notifications marked with a **Smart Follow-up** tag were generated automatically
+by the system rather than typed by a person — see
+[Part 3.2](#32-smart-follow-up).
+
+### The kinds of notification you can receive
+
+| Kind | What triggers it | Who receives it |
+|---|---|---|
+| **Hearing alert** | A hearing is coming up on a case | The case's assigned lawyer, and everyone tracking/watching that case — **privately, one copy each** |
+| **Task deadline alert** | A task assigned to you is coming due | **You alone** — the person the task is assigned to |
+| **Assignment notice** | Someone assigns you a task | **You alone.** It names who assigned it, the case, the request, and the deadline |
+| **Request Update notice** | Someone presses **Request Update** and picks you | **You alone.** It appears here *and* as a task in Reminders & Follow-ups |
+| **Document reviewed** | A document you uploaded is approved or rejected | **You alone** — the person who uploaded it. Includes the rejection reason where one was given |
+| **Smart Follow-up** | A task you were assigned is going unanswered | The assignee, plus a separate copy to the person who assigned it — nobody else |
+| **General announcement** | A system-wide message | Everyone holding the relevant role. This is the only kind that is *not* addressed to one person |
+
+**Personal versus general.** Almost everything you receive is a **notification
+sent specifically to you** — visible to you and to nobody else. A **general
+notification** is an announcement addressed to a whole role rather than to an
+individual, and everyone in that role sees it.
+
+The system does not have a shared inbox. Seeing a notification means it was
+addressed to you personally, or to your role. See
+[Part 3.3](#33-who-can-see-your-notifications).
+
+**Telling automatic apart from manual.** Automatic follow-ups carry a visible
+**Smart Follow-up** tag with a robot icon. If a notification has that tag,
+the system generated it — no colleague sat down and wrote it. Anything without
+the tag came from a real action a person took.
+
+**Printing.** **Print** at the top of the page prints your own notification history — date, message, kind, and whether you had read it. It prints only what you can already see; it can never widen what you are allowed to read. See [1.7](#17-printing).
+
+---
+
+## 2.6 Notifications → Reminders & Follow-ups tab
+
+**Where:** the **Notifications** menu entry, second tab. This is the firm's
+task list.
 
 A reminder is a **real task assigned to a real person with a real deadline**. It
 can be created in three places, all of which produce the same kind of task:
@@ -871,52 +935,6 @@ on the case explaining where things actually stand. **Dismiss** never changes
 the case.
 
 **Printing.** **Print** at the top of the page prints your task list as currently filtered, with each task's case, type, due date, assignee, who created it and its status. See [1.7](#17-printing).
-
----
-
-## 2.6 Notifications
-
-**Menu entry:** Notifications (shown as **Alerts** on a phone). Page heading:
-*Notification Center*.
-
-The complete list of alerts sent to you, newest first. Unread ones are
-highlighted. Click one to mark it read, or press **Mark all as read** to clear
-them all at once.
-
-The **bell** in the title bar carries the unread count and opens this page when
-clicked. This page is the only place notifications are displayed.
-
-Notifications marked with a **Smart Follow-up** tag were generated automatically
-by the system rather than typed by a person — see
-[Part 3.2](#32-smart-follow-up).
-
-### The kinds of notification you can receive
-
-| Kind | What triggers it | Who receives it |
-|---|---|---|
-| **Hearing alert** | A hearing is coming up on a case | The case's assigned lawyer, and everyone tracking/watching that case — **privately, one copy each** |
-| **Task deadline alert** | A task assigned to you is coming due | **You alone** — the person the task is assigned to |
-| **Assignment notice** | Someone assigns you a task | **You alone.** It names who assigned it, the case, the request, and the deadline |
-| **Request Update notice** | Someone presses **Request Update** and picks you | **You alone.** It appears here *and* as a task in Reminders & Follow-ups |
-| **Document reviewed** | A document you uploaded is approved or rejected | **You alone** — the person who uploaded it. Includes the rejection reason where one was given |
-| **Smart Follow-up** | A task you were assigned is going unanswered | The assignee, plus a separate copy to the person who assigned it — nobody else |
-| **General announcement** | A system-wide message | Everyone holding the relevant role. This is the only kind that is *not* addressed to one person |
-
-**Personal versus general.** Almost everything you receive is a **notification
-sent specifically to you** — visible to you and to nobody else. A **general
-notification** is an announcement addressed to a whole role rather than to an
-individual, and everyone in that role sees it.
-
-The system does not have a shared inbox. Seeing a notification means it was
-addressed to you personally, or to your role. See
-[Part 3.3](#33-who-can-see-your-notifications).
-
-**Telling automatic apart from manual.** Automatic follow-ups carry a visible
-**Smart Follow-up** tag with a robot icon. If a notification has that tag,
-the system generated it — no colleague sat down and wrote it. Anything without
-the tag came from a real action a person took.
-
-**Printing.** **Print** at the top of the page prints your own notification history — date, message, kind, and whether you had read it. It prints only what you can already see; it can never widen what you are allowed to read. See [1.7](#17-printing).
 
 ---
 
@@ -1168,7 +1186,8 @@ follow-up (1): the assigned employee has not provided an update yet on '[task]'
 Nobody else is involved. Both messages carry the **Smart Follow-up** tag so it
 is clear a person did not send them.
 
-To stop being nudged, answer the task on the **Reminders & Follow-ups** page.
+To stop being nudged, answer the task on the **Reminders & Follow-ups** tab of
+the **Notifications** page.
 
 ---
 
@@ -1485,7 +1504,8 @@ That is the default. Use **Grant Temporary Upload Access** in the **Document
 Center** to open a time-limited window for one specific case.
 
 **I keep getting Smart Follow-up nudges.**
-A task assigned to you is still open. Open **Reminders & Follow-ups** and press
+A task assigned to you is still open. Open **Notifications** → **Reminders &
+Follow-ups** and press
 **Mark Done** or **Dismiss**. The nudges stop immediately.
 
 **A case timeline shows only one step.**
