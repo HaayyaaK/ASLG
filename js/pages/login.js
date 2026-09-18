@@ -1,8 +1,39 @@
 import { t } from "../i18n.js";
-import { login } from "../auth.js";
+import { login, getCurrentUser } from "../auth.js";
 import { icon, brandMark } from "../ui.js";
 
+/**
+ * The login screen's background photograph is preloaded only when the login
+ * screen is what will render. It used to be a static <link rel="preload">
+ * in index.html, i.e. on every page -- so every signed-in page logged the
+ * browser warning "preloaded ... but not used within a few seconds".
+ * Removed again once the app shell renders (app.js::renderShell).
+ */
+const BG_PRELOAD_ID = "login-bg-preload";
+
+export function ensureBackgroundPreload() {
+  if (document.getElementById(BG_PRELOAD_ID)) return;
+  const link = document.createElement("link");
+  link.id = BG_PRELOAD_ID;
+  link.rel = "preload";
+  link.as = "image";
+  link.href = "/assets/background.jpg";
+  link.fetchPriority = "high";
+  document.head.appendChild(link);
+}
+
+export function removeBackgroundPreload() {
+  document.getElementById(BG_PRELOAD_ID)?.remove();
+}
+
+// Runs when app.js first imports this module, before boot() renders
+// anything: the earliest point this module can know the login screen is
+// coming (no signed-in user).
+if (!getCurrentUser()) ensureBackgroundPreload();
+
 export async function render(root, onSuccess) {
+  // Also covers reaching the login screen later: logout, idle sign-out.
+  ensureBackgroundPreload();
   root.innerHTML = `
     <div class="login-screen">
       <div class="login-orb orb-1"></div>
