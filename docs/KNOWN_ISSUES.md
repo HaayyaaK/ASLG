@@ -6,7 +6,7 @@ pick it up without re-investigating from scratch.
 
 ---
 
-## KI-1 — My Cases keeps the last status filter after navigating to plain `#/cases`
+## KI-1 — Cases keeps the last status filter after navigating to plain `#/cases`
 
 | | |
 |---|---|

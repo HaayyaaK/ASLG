@@ -29,7 +29,7 @@ export const KUWAIT_WEBSITES = [
     // link. Tawtheeq's power-of-attorney services are reached through the
     // Ministry of Justice's e-services portal, which is verified reachable.
     url: "https://eservices.moj.gov.kw",
-    name_en: "E-Services of MOJ", name_ar: "توثيق — الخدمات الإلكترونية للعدل",
+    name_en: "E-Services of MOJ", name_ar: "الخدمات الإلكترونية للعدل",
     services_en: "Issuing and cancelling powers of attorney, verifying validity",
     services_ar: "إصدار وإلغاء الوكالات والتحقق من صلاحيتها",
     benefit_en: "Handle power-of-attorney procedures electronically",

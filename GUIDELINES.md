@@ -373,10 +373,10 @@ it.
 
 | Tab | What it holds |
 |---|---|
-| **My Cases** | The firm's case list, case details, notes and stage — described in this section |
+| **Cases** | The firm's case list, case details, notes and stage — described in this section |
 | **Official Search Engine** | Search by case number, sessions, experts, execution files, or across the firm's records — see [2.3](#23-cases--official-search-engine-tab) |
 
-**Clients see only My Cases** — the Official Search Engine tab is not shown to
+**Clients see only Cases** — the Official Search Engine tab is not shown to
 them at all. Switching between the two tabs keeps your place in each: a search
 you ran is still there when you come back to it.
 
@@ -389,7 +389,7 @@ and is at most a minute behind changes colleagues make.
 Old bookmarks to the Official Search Engine still work — they open this page on
 the Official Search Engine tab.
 
-### The My Cases tab
+### The Cases tab
 
 Page heading: *Cases & Case Statements*. The case list, with two dropdown
 filters above it:

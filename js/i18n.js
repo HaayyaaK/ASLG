@@ -499,7 +499,7 @@ const dict = {
     watched_empty: 'لا توجد قضايا قيد المتابعة',
     watched_view_all: 'عرض كل القضايا',
     // --- Cases page tabs (Merge A) ---
-    cases_tab_mine: 'قضاياي',
+    cases_tab_mine: 'القضايا',
     cases_hub_tabs_label: 'أقسام صفحة القضايا',
     hub_tab_refresh_hint: 'انقر للتحديث',
     notifications_hub_tabs_label: 'أقسام صفحة التنبيهات',
@@ -1006,7 +1006,7 @@ const dict = {
     watched_empty: 'No cases being watched',
     watched_view_all: 'View all cases',
     // --- Cases page tabs (Merge A) ---
-    cases_tab_mine: 'My Cases',
+    cases_tab_mine: 'Cases',
     cases_hub_tabs_label: 'Cases page sections',
     hub_tab_refresh_hint: 'click to refresh',
     notifications_hub_tabs_label: 'Notifications page sections',
