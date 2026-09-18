@@ -3068,10 +3068,19 @@ tbody tr:hover {
 /* Deliberately unlike a normal notification: an automatic nudge must never be
    mistaken for a colleague personally chasing you, and the lawyer's FYI copy
    must not read as though they sent it themselves. */
+/* The tint fades from the row's inline-start edge (where the accent border
+   is). A gradient angle is physical -- 90deg is left-to-right whatever the
+   text direction -- and browsers don't implement logical gradient keywords
+   (`to inline-end`), so the angle is a custom property flipped under RTL;
+   the color stops stay defined once. */
 .notif-smart {
+  --notif-smart-angle: 90deg;
   border-inline-start: 3px solid var(--color-accent);
   padding-inline-start: var(--space-4);
-  background: linear-gradient(90deg, #fbf3e8 0%, transparent 60%);
+  background: linear-gradient(var(--notif-smart-angle), #fbf3e8 0%, transparent 60%);
+}
+[dir="rtl"] .notif-smart {
+  --notif-smart-angle: 270deg;
 }
 .smart-tag {
   display: inline-flex;
