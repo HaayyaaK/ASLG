@@ -217,7 +217,8 @@ function renderShell(user) {
   `;
 
   wireShellEvents(user);
-  refreshNotifBadge();
+  // (No refreshNotifBadge() here: handleRoute() below does it, and calling
+  // it in both places fetched /api/notifications twice per shell render.)
   // Started here rather than in boot(): the shell only renders for a
   // signed-in user, and renderShell() is also what a language toggle goes
   // through, so restarting the timer from a known-good state is correct in
@@ -324,6 +325,10 @@ function handleRoute() {
   if (!user) { renderLogin(); return; }
 
   resolveRouteAlias();
+  // The one place the bell badge is refreshed: once per navigation and once
+  // per shell render (renderShell ends by calling this function). Before
+  // the early returns below, so the access-denied path updates it too.
+  refreshNotifBadge();
   const path = currentRoutePath();
   const route = ROUTES.find((r) => r.path === path) || ROUTES[0];
   const allowed = getPermission(route.perm) !== "none";
@@ -376,7 +381,6 @@ function handleRoute() {
     .then(() => target.page.render(contentEl, user))
     .catch((err) => renderPageError(contentEl, err, user));
   activePage = target.page;
-  refreshNotifBadge();
 }
 
 /**

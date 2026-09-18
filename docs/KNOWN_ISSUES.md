@@ -68,7 +68,12 @@ follows the focused tab.
 
 ---
 
-## KI-3 — Every full shell render requests `/api/notifications` twice for the bell badge
+## KI-3 — Every full shell render requests `/api/notifications` twice for the bell badge — **RESOLVED**
+
+> **Resolved** in commit `fix(notif): dedupe notification count fetch on page
+> load`: `refreshNotifBadge()` now has one call site, at the top of
+> `handleRoute()` (before its early returns, so the access-denied path still
+> updates the badge). Kept here for the record.
 
 | | |
 |---|---|
