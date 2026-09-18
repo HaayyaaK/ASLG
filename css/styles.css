@@ -1401,10 +1401,48 @@ a {
     transform: none;
   }
 }
-@media (max-width: 640px) {
+/* Icon + label -> icon only below 768px (Item 3). 767.98px, not the
+   file's usual 768px: at exactly 768px the labels must still show. The
+   label is visually hidden, not display:none, so it stays in the
+   accessibility tree; every such button also carries aria-label (the
+   accessible name) and title (the pointer tooltip). The button becomes a
+   fixed square the size of a touch target, so a row of them can't wrap
+   into uneven heights the way long labels did. */
+@media (max-width: 767.98px) {
   .qa-action-btn {
-    flex: 1 1 calc(50% - var(--space-2));
+    position: relative;
     justify-content: center;
+    inline-size: var(--control-height);
+    padding-inline: 0;
+    gap: 0;
+  }
+  .qa-action-btn .btn-label,
+  .hub-tab:not([aria-selected="true"]) .btn-label {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+  /* The Dashboard's Quick search trigger: its "Quick search" label already
+     hides at this width (.label-full), and a "Ctrl K" hint is meaningless
+     on the touch devices this width serves -- icon only. Its accessible
+     name comes from aria-label, not the hidden text. */
+  #cmdk-trigger .cmdk-kbd {
+    display: none;
+  }
+  /* Hub tabs keep the SELECTED tab's label visible, so the page always says
+     which tab you are on; only the other tabs collapse to their icon. */
+  .hub-tab {
+    position: relative;
+  }
+  .hub-tab:not([aria-selected="true"]) {
+    padding-inline: var(--space-3);
+    gap: 0;
   }
 }
 

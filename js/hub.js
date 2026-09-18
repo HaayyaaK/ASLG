@@ -82,7 +82,7 @@ export function createHub({ base, tabsLabelKey, sections }) {
                   <button type="button" class="hub-tab" role="tab" id="hub-tab-${s.key}" data-section="${s.key}"
                           aria-controls="hub-pane-${s.key}" aria-selected="false" tabindex="-1"
                           title="${escapeHtml(`${t(s.label)} — ${t("hub_tab_refresh_hint")}`)}">
-                    <span class="hub-tab-icon" aria-hidden="true">${icon(s.icon)}</span><span>${escapeHtml(t(s.label))}</span>
+                    <span class="hub-tab-icon" aria-hidden="true">${icon(s.icon)}</span><span class="btn-label">${escapeHtml(t(s.label))}</span>
                   </button>`
                   )
                   .join("")}

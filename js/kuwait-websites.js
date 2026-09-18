@@ -77,8 +77,9 @@ export function usefulWebsitesPanel() {
             const name = lang === "ar" ? s.name_ar : s.name_en;
             const desc = lang === "ar" ? s.services_ar : s.services_en;
             return `
-            <a class="qa-action-btn" href="${s.url}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(desc)}">
-              ${icon(s.icon)}<span>${escapeHtml(name)}</span>
+            <a class="qa-action-btn" href="${s.url}" target="_blank" rel="noopener noreferrer"
+               aria-label="${escapeHtml(name)}" title="${escapeHtml(`${name} — ${desc}`)}">
+              ${icon(s.icon)}<span class="btn-label">${escapeHtml(name)}</span>
             </a>`;
           }).join("")}
         </div>

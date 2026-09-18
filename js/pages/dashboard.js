@@ -79,8 +79,9 @@ export async function render(container, user) {
     <div class="flex-between" style="margin-bottom:16px;">
       <h2 class="mt-0">${t("nav_dashboard")}</h2>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-        <button type="button" class="btn btn-outline btn-sm" id="cmdk-trigger" title="${escapeHtml(t("cmdk_hint"))}">
-          ${icon("magnifying-glass")} <span class="label-full">${t("cmdk_trigger_label")}</span> <kbd class="cmdk-kbd">Ctrl K</kbd>
+        <button type="button" class="btn btn-outline btn-sm" id="cmdk-trigger" title="${escapeHtml(t("cmdk_hint"))}"
+                aria-label="${escapeHtml(t("cmdk_trigger_label"))}" aria-keyshortcuts="Control+K">
+          ${icon("magnifying-glass")} <span class="label-full">${t("cmdk_trigger_label")}</span> <kbd class="cmdk-kbd" aria-hidden="true">Ctrl K</kbd>
         </button>
         ${printButton("dash-print")}
       </div>
@@ -498,8 +499,9 @@ function quickActionsRowHtml({ canNewCase, canAssignTask, canAskUpdate, canCheck
       ${items
         .map(
           (it) => `
-        <button type="button" class="qa-action-btn" data-qa-action="${it.key}">
-          ${icon(it.iconName)}<span>${it.label}</span>
+        <button type="button" class="qa-action-btn" data-qa-action="${it.key}"
+                aria-label="${escapeHtml(it.label)}" title="${escapeHtml(it.label)}">
+          ${icon(it.iconName)}<span class="btn-label">${it.label}</span>
         </button>`
         )
         .join("")}
