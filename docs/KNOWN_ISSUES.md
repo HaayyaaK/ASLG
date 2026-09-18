@@ -157,3 +157,27 @@ system-generated titles and render it per language at display time, or keep
 per-language title fields on reminders. Leave user-typed titles as typed.
 
 **Why deferred.** Out of scope for the UI overhaul; logged by review decision.
+
+---
+
+## KI-6 — One-off: two narrow-width renders came up in Arabic under an English setting
+
+| | |
+|---|---|
+| **Found** | Layout-restructure verification (Gate 1), Sept 2026 |
+| **Severity** | None observed for real users — logged for traceability, by review decision. |
+| **Status** | Not reproducible. |
+
+**What happened.** The first 375px and 768px renders of the Dashboard came
+up in Arabic although English was the saved language. Three repeat runs
+were all English.
+
+**Context.** Those renders used the fixed-width embedded-frame technique
+(a same-origin `<iframe>` of the app at a set width), because the browser
+tool's `resize_window` does not change the viewport. The live tab itself
+never showed it, and no later verification (Merge A, Merge B, Items 1–9,
+final sweep, Admin and Client) reproduced it.
+
+**If it recurs.** Check what the language preference read at the moment the
+frame's app booted; investigate then, per the review decision not to chase
+an unreproducible artifact.
