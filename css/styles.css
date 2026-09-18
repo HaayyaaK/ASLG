@@ -1173,6 +1173,9 @@ a {
 
 /* ---------- Official Search Engine: source-of-truth disclaimer + sync panel --- */
 .search-source-notice {
+  /* Sits below the results (last thing in the search panel), so it needs
+     its own clearance from the results table above it. */
+  margin-block: var(--space-5) 0;
   font-size: var(--text-xs);
   color: var(--color-text-muted);
   background: var(--color-warning-bg);

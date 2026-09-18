@@ -639,7 +639,7 @@ Open the portal on a phone (or narrow a desktop browser window below about 768px
 
 **Where it shows up:**
 - **Case Details modal → "Procedural Intelligence"** section: the latest recorded event, any next-action candidates (with their due date, confidence badge, and legal citation), a "Record Procedure" button, and the full event history.
-- **Official Search Engine** tab (on the Cases page): a disclaimer that the five search tabs show the firm's own records, not live government data (unchanged behaviour — just now stated explicitly), plus the "Check official portal" panel described above.
+- **Official Search Engine** tab (on the Cases page): a disclaimer that the five search tabs show the firm's own records, not live government data (unchanged behaviour — just now stated explicitly; `.search-source-notice`, shown below the search results since the Sept 2026 overhaul — its text reads "Results above…"), plus the "Check official portal" panel described above.
 - **Deadlines** (new sidebar entry): a firm-wide, permission-scoped list of every deadline, filterable by status, with Confirm/Waive actions.
 - **Dashboard**, third stats row: deadlines due this week, overdue deadlines, deadlines awaiting a lawyer's confirmation, and cases not checked against an official source recently.
 - **Procedure Rules** (new sidebar entry, Admin/Lawyer only): the rule catalogue itself, where a rule is enabled or disabled.

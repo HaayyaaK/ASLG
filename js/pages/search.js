@@ -62,11 +62,14 @@ export async function render(container, user) {
       <div class="panel-body">
         <h2 class="mt-0">${t("search_hub_title")}</h2>
         <p class="text-muted mt-0">${t("search_hub_subtitle")}</p>
-        <p class="search-source-notice">${icon("circle-info")} ${t("search_source_notice")}</p>
         <div class="tabs" id="search-tabs">
           ${TABS.map((tb) => `<button class="tab-btn ${tb.key === activeTab ? "active" : ""}" data-tab="${tb.key}"><span class="label-full">${t(tb.label)}</span><span class="label-short">${t(tb.shortLabel)}</span></button>`).join("")}
         </div>
         <div id="search-tab-content"></div>
+        <!-- Below the results, not above the tabs: a legal disclosure that
+             must stay on the page, without top-of-page prominence. Its text
+             already reads "Results above ...", which is only true here. -->
+        <p class="search-source-notice">${icon("circle-info")} ${t("search_source_notice")}</p>
       </div>
     </div>
     ${getPermission("official_sync") !== "none" ? officialSyncPanelSkeleton() : ""}
